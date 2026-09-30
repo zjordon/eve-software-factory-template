@@ -178,7 +178,7 @@ graph TD
     F --> H[git push 经沙箱防火墙代理凭据]
     G --> I[草稿 PR 交付]
     H --> I
-    D -.验证.-> J[pnpm validate<br/>check + typecheck + eve info<br/>cmd.exe 下 && 正常]
+    D -.->|验证| J[pnpm validate<br/>check + typecheck + eve info<br/>cmd.exe 下 && 正常]
 
     style B fill:#e1ffe1
     style D fill:#e1f5ff
