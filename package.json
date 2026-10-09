@@ -20,6 +20,7 @@
     "validate": "pnpm run check && pnpm run typecheck && eve info"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.76",
     "@github-tools/eve-extension": "^0.8.0",
     "@vercel/blob": "^2.8.0",
     "@vercel/connect": "^2.3.3",
@@ -30,6 +31,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
     "@types/node": "~24.19.0",
+    "just-bash": "^3.6.0",
     "typescript": "7.0.2",
     "ultracite": "^7.12.1"
   },

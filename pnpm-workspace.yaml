@@ -9,3 +9,7 @@ minimumReleaseAgeExclude:
   - eve
   - workflow
   - ultracite@7.12.1
+
+ignoredOptionalDependencies:
+  - "@mongodb-js/zstd"
+  - "node-liblzma"
