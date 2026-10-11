@@ -1,6 +1,6 @@
 import type { GitHubChannelCredentials } from "eve/channels/github";
 import type { SandboxNetworkPolicy } from "eve/sandbox";
-import { FACTORY_REPO } from "../constants.js";
+import { FACTORY_BRANCH_PREFIX, FACTORY_REPO } from "../constants.js";
 
 const PROTECTED_BRANCHES = new Set(["main", "master"]);
 
@@ -35,7 +35,12 @@ export const REMOTE_URL = `https://github.com/${FACTORY_REPO}.git`;
  * `refs/heads/main` and `HEAD` would reach a protected branch under another
  * name, so only plain branch names are accepted, and the protected branches
  * themselves are refused outright: the factory delivers pull requests, never
- * direct pushes to the default branch.
+ * direct pushes to the default branch. The factory branch prefix is required
+ * for the same structural reason: the GitHub channel runs the red-CI fix
+ * loop only on pull requests whose head branch carries it, so a push under
+ * any other prefix would silently lose that safety net. Enforcing it here
+ * makes the invariant a property of the pipeline instead of a naming
+ * convention the implementer has to remember.
  */
 export function validateBranch(branch: string): string | null {
   if (
@@ -50,6 +55,9 @@ export function validateBranch(branch: string): string | null {
   }
   if (PROTECTED_BRANCHES.has(branch)) {
     return `Direct pushes to ${branch} are not allowed. Push a feature branch and open a pull request.`;
+  }
+  if (!branch.startsWith(FACTORY_BRANCH_PREFIX)) {
+    return `Branch names must start with "${FACTORY_BRANCH_PREFIX}" (e.g. ${FACTORY_BRANCH_PREFIX}bug-dedupe-reset-emails); "${branch}" is refused. Rename the branch to the ${FACTORY_BRANCH_PREFIX} form and push again.`;
   }
   return null;
 }

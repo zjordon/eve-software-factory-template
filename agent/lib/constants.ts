@@ -71,9 +71,12 @@ export const FACTORY_LABEL = process.env.FACTORY_LABEL ?? "factory";
  * @remarks
  * The implementer names its branches `factory/<type>-<slug>`; the GitHub
  * channel uses the prefix to recognize the factory's own pull requests, so
- * the red-CI fix loop never runs on branches people pushed. The implementer's
- * instructions carry the default prefix as prose, so an override should keep
- * them in sync (`agent/subagents/implementer/instructions.md`).
+ * the red-CI fix loop never runs on branches people pushed, and
+ * `validateBranch` refuses git operations outside the prefix so the two
+ * can't drift apart. The git tool descriptions interpolate this constant
+ * directly; the implementer's instructions still carry the default prefix
+ * as prose, so an override should keep them in sync
+ * (`agent/subagents/implementer/instructions.md`).
  */
 export const FACTORY_BRANCH_PREFIX =
   process.env.FACTORY_BRANCH_PREFIX ?? "factory/";

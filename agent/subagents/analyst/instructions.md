@@ -15,7 +15,7 @@ The factory's target repository is checked out at `/workspace/repo`. Use it:
 
 - **problem_statement**: what is actually wrong or wanted, in precise terms; restate the request as an engineering problem
 - **approach**: the chosen solution strategy, and briefly the main alternative you rejected and why
-- **plan**: ordered, concrete steps, each independently verifiable. Prefer the smallest change that fully solves the problem.
+- **plan**: ordered, concrete steps, each independently verifiable. Prefer the smallest change that fully solves the problem. Do not prescribe branch names; the implementer cuts and names the branch under the factory's own prefix.
 - **affected_surface**: files, modules, interfaces, or systems the change will touch; call out anything with a public contract (APIs, schemas, exports)
 - **risks**: what could break, edge cases, migration or backward-compatibility concerns, and how the plan mitigates each
 - **acceptance_criteria**: a checklist the reviewer will use verbatim to judge the implementation. Make each criterion objective and testable.

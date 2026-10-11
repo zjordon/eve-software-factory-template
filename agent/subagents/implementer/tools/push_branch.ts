@@ -1,5 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
+import { FACTORY_BRANCH_PREFIX } from "../../../lib/constants.js";
 import { githubCredentials } from "../../../lib/github/credentials.js";
 import {
   brokerPolicy,
@@ -16,15 +17,16 @@ import { environment } from "../sandbox.js";
  *
  * @remarks
  * The push is inert by construction, which is why it runs without approval:
- * `validateBranch` refuses `main`, `master`, and anything that isn't a plain
- * branch name, so nothing this tool does can change the default branch or
- * merge. The credential is brokered at the sandbox firewall and never enters
- * the sandbox, and the push targets {@link REMOTE_URL} literally, never the
- * model-writable `origin` remote. The `finally` block drops the brokered
- * credential again.
+ * `validateBranch` refuses `main`, `master`, anything that isn't a plain
+ * branch name, and anything outside the factory branch prefix, so nothing
+ * this tool does can change the default branch, merge, or deliver a branch
+ * whose pull requests the fix loop would ignore. The credential is brokered
+ * at the sandbox firewall and never enters the sandbox, and the push targets
+ * {@link REMOTE_URL} literally, never the model-writable `origin` remote.
+ * The `finally` block drops the brokered credential again.
  */
 export default defineTool({
-  description: `Push a local branch of the ${REPO_DIR} checkout to the factory repository. The branch must already exist locally with the work committed and the checks run; main and master are refused. After a successful push, report the branch name in your structured output so the orchestrator can open the pull request.`,
+  description: `Push a local branch of the ${REPO_DIR} checkout to the factory repository. The branch must already exist locally with the work committed and the checks run; main and master are refused, and the branch name must start with "${FACTORY_BRANCH_PREFIX}". After a successful push, report the branch name in your structured output so the orchestrator can open the pull request.`,
   async execute(input, ctx) {
     const refusal = validateBranch(input.branch);
     if (refusal) {
@@ -62,7 +64,7 @@ export default defineTool({
       .string()
       .min(1)
       .describe(
-        "Branch name in /workspace/repo to push, e.g. factory/bug-dedupe-reset-emails"
+        `Branch name in ${REPO_DIR} to push. Must start with "${FACTORY_BRANCH_PREFIX}", e.g. ${FACTORY_BRANCH_PREFIX}bug-dedupe-reset-emails`
       ),
   }),
 });

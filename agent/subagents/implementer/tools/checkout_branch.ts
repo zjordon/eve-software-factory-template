@@ -1,5 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
+import { FACTORY_BRANCH_PREFIX } from "../../../lib/constants.js";
 import { githubCredentials } from "../../../lib/github/credentials.js";
 import {
   brokerPolicy,
@@ -58,6 +59,8 @@ export default defineTool({
     branch: z
       .string()
       .min(1)
-      .describe("The existing branch to fetch and check out."),
+      .describe(
+        `The existing branch to fetch and check out; must start with "${FACTORY_BRANCH_PREFIX}".`
+      ),
   }),
 });
