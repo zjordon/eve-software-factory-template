@@ -93,10 +93,14 @@ eve-software-factory-template/
 
 ```mermaid
 graph TD
-    subgraph Host["自托管运行时 (WSL2 + pm2 守护)"]
+    subgraph Edge["公网入口 (唯一入站路径)"]
+        TUNNEL["cloudflared 隧道<br/>GitHub webhook → /eve/v1/github"]
+    end
+
+    subgraph Host["工厂运行时 = 一个 Node 进程 (M1: Windows TUI / M2起: WSL2 + pm2 常驻)"]
         direction TB
-        subgraph Channels["入口"]
-            GH["GitHub Webhook (BYO App 签名)<br/>issues / issue_comment / pull_request / check_suite"]
+        subgraph Channels["入口通道"]
+            GH["GitHub 通道 (BYO App 签名校验)<br/>issues / issue_comment / pull_request / check_suite"]
             EV["eve 路由鉴权<br/>localDevUser + Basic"]
         end
         subgraph Root["根会话 (Foreman 编排器)"]
@@ -110,7 +114,7 @@ graph TD
             W4["run_implementer"]
             W5["run_reviewer"]
         end
-        subgraph Stations["站点子会话 (fresh, 继承空)"]
+        subgraph Stations["站点子会话 (fresh, 继承空)<br/>会话本体在 Node 进程内, 重活外包给沙箱"]
             S1["classifier"]
             S3["analyst"]
             S4["implementer"]
@@ -120,11 +124,13 @@ graph TD
         WF[(".eve/.workflow-data<br/>工作流状态")]
     end
 
-    subgraph External["外部依赖 (全部出站)"]
-        TUNNEL["cloudflared 隧道<br/>webhook 公网入口"]
+    subgraph LocalBox["本机基础设施 (不是运行时)"]
+        DSBX["Docker 沙箱容器 = 站点的车间<br/>按需起、用完即弃 (M1-M4 全程不变)<br/>自建镜像: git + uv + Chrome"]
+    end
+
+    subgraph External["外部服务 (出站调用)"]
         GITHUB[("GitHub API + git")]
         ZHIPU["智谱 GLM API<br/>glm-5.3 / glm-5.3-flash"]
-        DSBX["Docker 沙箱容器<br/>自建镜像: git + uv + Chrome"]
     end
 
     TUNNEL --> GH
@@ -135,7 +141,7 @@ graph TD
     ORCH --> W3 --> S3
     ORCH --> W4 --> S4
     ORCH --> W5 --> S5
-    S3 & S4 & S5 --> DSBX
+    S3 & S4 & S5 -->|"按需拉起"| DSBX
     DSBX --> GITHUB
     EXT --> GITHUB
     PREF & S1 & S3 & S4 & S5 --> STORE
@@ -147,6 +153,15 @@ graph TD
     style STORE fill:#ffe1e1
     style DSBX fill:#e1ffe1
 ```
+
+**运行时 vs 沙箱(防混淆速查)**:运行时(编排器)自始至终是一个普通 Node 进程,Docker 容器只是站点干活的沙箱车间——两者不是并列的两套运行时。变的只是进程的"住所":
+
+| 阶段 | 运行时(编排器 Node 进程)住哪 | 站点沙箱(Docker 车间) |
+|------|------|------|
+| M1 | Windows,`pnpm dev` TUI(交互式,人在才活) | Docker 容器,按需起、用完即弃 |
+| M2 起 | WSL2,`eve start` + pm2 常驻 | 同一批 Docker 容器,不变 |
+
+一句话:办公室(Node 进程)从 M1 的 Windows 桌面搬进 M2 的 WSL2 机房,车间(容器)从不动。另注:Docker Desktop 的容器本来就跑在它自带的 WSL2 发行版(`docker-desktop`)里,Docker 与 WSL2 是叠加关系而非二选一。
 
 ### 2.5 信任与授权模型(不变量,原样继承)
 
