@@ -163,6 +163,25 @@ graph TD
 
 一句话:办公室(Node 进程)从 M1 的 Windows 桌面搬进 M2 的 WSL2 机房,车间(容器)从不动。另注:Docker Desktop 的容器本来就跑在它自带的 WSL2 发行版(`docker-desktop`)里,Docker 与 WSL2 是叠加关系而非二选一。
 
+**沙箱容器的粒度与生命周期**:容器按**站点会话**拉起,不按需求。一次完整流水线顺序生灭约 3 个容器,单工厂串行处理时任意时刻最多活 1 个;进件瞬间也不拉容器(分类站在 Node 进程内跑),第一个容器等到分析站开工才出现;评审返工每轮为返工站点追加一个(上限 2 轮)。站点间隔离正来源于此:implementer 与 reviewer 各用独立容器,reviewer 看到的是干净检出,不是 implementer 的施工现场。
+
+```text
+issue 打 factory 标签
+  → classifier   (Node 进程内,无容器)
+  → analyst      容器①  克隆、读码、写计划 ──────────→ 弃
+  → implementer  容器②  克隆、装依赖、改码、测试、推分支 → 弃
+  → reviewer     容器③  检出分支、独立复核 ──────────→ 弃
+  → 草稿 PR(Node 进程内,走 GitHub API)
+```
+
+**多工厂的进程与容器关系**:每个工厂一个 Node 进程(进程边界即工厂边界:自己的代码、环境变量、GitHub App),但所有工厂共享本机**同一个 Docker 引擎**。并存容器数的上限不是工厂数,而是同时活着的站点会话数(受内存/CPU 约束):单工厂串行恒为 1 个活容器,两个工厂同时各跑一个需求才会出现 2 个并存。
+
+```text
+工厂甲(Node 进程)──┐
+工厂乙(Node 进程)──┼──→ 同一个 Docker 引擎 ──→ 按需起 N 个容器
+工厂丙(Node 进程)──┘
+```
+
 ### 2.5 信任与授权模型(不变量,原样继承)
 
 - **信任在派发时决定,不在提示词里**:GitHub 通道对 OWNER/MEMBER/COLLABORATOR 提及盖 `trusted`;`factory` 标签进件把会话 auth 重写为自治主体并盖章 intake issue 号。自托管下事件来源从 Connect 转发变为 BYO App webhook(签名校验同强度),信任推导逻辑零改动。
