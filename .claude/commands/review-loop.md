@@ -45,8 +45,9 @@ allowed-tools: Bash(git:*), Bash(uv:*), Bash(ocr:*), Bash(which:*), Bash(ls:*), 
 
 0. **续跑/接手检测**（两种形态，都从盘上事实推导，不靠会话记忆）：
    - **状态文件续跑**：`.git/review-loop-state.json` 存在且 `phase != "done"` → 读状态
-     文件，与 `git log --oneline -1` 核对 `lastCommit` 一致后**从记录的轮次续跑**
-     （轮号不重推）；不一致（用户手动动过分支）则向用户确认后重建状态。
+     文件，核对 `lastCommit` 是当前分支 tip 的祖先（`git merge-base --is-ancestor`；
+     相等或落后均正常——采纳修复会产生更新的 tip）后**从记录的轮次续跑**
+     （轮号不重推）；不是祖先（分支被外部改写）则向用户确认后重建状态。
    - **孤儿结果收养**（无状态文件或已 done 时必查）：`ls docs/bug-fix/code-review/
      review-issue-<issue>-*.json` 扫出的结果文件中，凡轮号 **大于状态文件/issue 已
      登记轮次**且 `git log --oneline --grep="<issue>"` 无对应修复提交的，即为
@@ -72,7 +73,9 @@ allowed-tools: Bash(git:*), Bash(uv:*), Bash(ocr:*), Bash(which:*), Bash(ls:*), 
   - `phase`：`reviewing`（ocr 在跑）/ `triaging`（处置中，结果 JSON 在盘可重读）/ `done`。
   - `stats`：`{rounds, findings, adopted, rejected, stale}` 累计值。
   - 写入时机：循环启动时、**每次发起 ocr 后台评审前**（round/phase=reviewing）、
-    **每轮提交完成后**（stats/lastCommit/round=下一轮）。
+    **每轮提交完成后**（stats / round=下一轮；lastCommit=本轮摘要 range 的终点
+    head——不是修复提交，修复提交属于下一轮增量）。
+  - `lastCommit` 语义：最近一次**完成评审**覆盖的分支 head，作下一轮 diffBase。
 - **轮边界主动提醒（上下文 >50% 防线）**：每轮提交完成、即将发起下一轮评审前——
   若本会话已连续处理 ≥2 轮，向用户提示「上下文可能已过半，现在 /compact 最安全：
   循环状态已落盘，压缩后自动续跑或重开 /review-loop 均无损」（压缩是用户侧命令，
@@ -105,10 +108,13 @@ ocr review --from <diffBase> --to <branch> -B .git/ocr-background.md --format js
 ```
 
 - **增量 diff（防「修复生产新意见」的正反馈）**：`diffBase` 首轮 = `<base>`（如
-  main），后续轮 = 状态文件的 `lastCommit`（上一轮修复提交）——只评审增量，
-  旧代码不重复扫（全量重扫是 47 轮不收敛的机制之一）。**上一轮无修复提交时
-  （全驳回/backlog）lastCommit 未变 → 增量为空，该轮即视为无 P1/P2 轮**，直接计入
-  收敛判据，不空跑评审。
+  main），后续轮 = 状态文件的 `lastCommit`（**上一轮评审覆盖的分支 head**，不是
+  上一轮修复提交——修复提交属于下一轮的评审增量；把 diffBase 设成修复提交本身会
+  得到空 range：status=skipped、no items selected，本仓第 1 轮实测踩过）——只评审
+  增量，旧代码不重复扫（全量重扫是 47 轮不收敛的机制之一）。**上一轮后分支无新
+  提交时（全驳回/backlog）→ 增量为空，该轮即视为无 P1/P2 轮**，直接计入收敛
+  判据，不空跑评审（空 range 的 ocr 结果 status 是 skipped 而非 complete，按本
+  规则处置，不当作零意见收敛）。
 - **必须后台运行（run_in_background）**：单轮评审 10-20 分钟，超出前台命令上限；
   任务完成通知到达后继续下一步。
 - 完成后删除 `.git/ocr-background.md`。
