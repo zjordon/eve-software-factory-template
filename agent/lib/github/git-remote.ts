@@ -115,7 +115,11 @@ const DOCKER_CREDENTIAL_STORE = "/tmp/.factory-git-credentials";
  * helper instead. That is the documented self-hosting downgrade: the token
  * is short-lived (one hour), lives only between this call and
  * {@link disarmGitCredentials}, and never appears in a shell command line
- * (the file is written through sandbox file I/O, not `run`).
+ * (the file is written through sandbox file I/O, not `run`). If the helper
+ * registration fails after the store file landed, the store is removed
+ * again before the error propagates, so a partial arm leaves nothing
+ * behind (callers keep this call outside their `try`, so `disarm` in the
+ * `finally` would not run for it).
  *
  * The backend is read from the same `FACTORY_SANDBOX_BACKEND` switch that
  * picked the environment, so the arming always matches the session type;
@@ -131,9 +135,26 @@ export async function armGitCredentials(
       content: `https://x-access-token:${token}@github.com\n`,
       path: DOCKER_CREDENTIAL_STORE,
     });
-    await docker.run({
-      command: `git config --global credential.helper 'store --file=${DOCKER_CREDENTIAL_STORE}'`,
-    });
+    try {
+      const config = await docker.run({
+        command: `git config --global credential.helper 'store --file=${DOCKER_CREDENTIAL_STORE}'`,
+      });
+      if (config.exitCode !== 0) {
+        throw new Error(
+          `git config credential.helper exited ${config.exitCode}: ${String(
+            config.stderr || config.stdout
+          ).trim()}`
+        );
+      }
+    } catch (error) {
+      await docker
+        .removePath({ force: true, path: DOCKER_CREDENTIAL_STORE })
+        .catch(() => {
+          // Best effort: the original error is the informative one, and a
+          // failed removePath means the exec channel is gone anyway.
+        });
+      throw error;
+    }
     return;
   }
   await (sandbox as VercelSandboxSession).setNetworkPolicy(brokerPolicy(token));
@@ -142,18 +163,19 @@ export async function armGitCredentials(
 /**
  * Drops the credential again after a credentialed operation, in a
  * `finally`: Vercel reopens general egress, Docker removes the credential
- * store file and its git config entry.
+ * store file and then its git config entry, in that order so a failure
+ * while unregistering the helper cannot leave the credential behind.
  */
 export async function disarmGitCredentials(
   sandbox: FactorySandboxSession
 ): Promise<void> {
   if (DOCKER_SANDBOX_BACKEND) {
     const docker = sandbox as DockerSandboxSession;
+    await docker.removePath({ force: true, path: DOCKER_CREDENTIAL_STORE });
     await docker.run({
       command:
         "git config --global --unset-all credential.helper >/dev/null 2>&1 || true",
     });
-    await docker.removePath({ force: true, path: DOCKER_CREDENTIAL_STORE });
     return;
   }
   await (sandbox as VercelSandboxSession).setNetworkPolicy("allow-all");

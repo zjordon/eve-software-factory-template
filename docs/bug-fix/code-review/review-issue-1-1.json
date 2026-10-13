@@ -1,0 +1,273 @@
+{
+  "status": "complete",
+  "llm": {
+    "model": "glm-5.3"
+  },
+  "message": "Review complete: 1 finding(s) across 15 selected item(s).",
+  "summary": {
+    "files_reviewed": 15,
+    "comments": 1,
+    "total_tokens": 1394571,
+    "input_tokens": 1314334,
+    "output_tokens": 80237,
+    "cache_read_tokens": 1019776,
+    "elapsed": "15m7s"
+  },
+  "tool_calls": {
+    "total": 87,
+    "by_tool": {
+      "code_comment": 1,
+      "code_search": 36,
+      "file_find": 15,
+      "file_read": 35
+    },
+    "failure": 2,
+    "failure_by_tool": {
+      "file_read": 2
+    },
+    "failure_details": [
+      {
+        "tool_call_number": 11,
+        "tool_name": "file_read",
+        "file_path": "agent/sandbox.ts,agent/subagents/implementer/tools/checkout_branch.ts,agent/subagents/implementer/tools/push_branch.ts,agent/subagents/reviewer/tools/checkout_branch.ts",
+        "arguments": "{\"file_path\":\"node_modules/eve/docs/sandbox.md\"}",
+        "error": "file \"node_modules/eve/docs/sandbox.md\" not found: git show feat/self-hosting:node_modules/eve/docs/sandbox.md: exit status 128: fatal: path 'node_modules/eve/docs/sandbox.md' does not exist in 'feat/self-hosting'\n"
+      },
+      {
+        "tool_call_number": 77,
+        "tool_name": "file_read",
+        "file_path": "agent/channels/github.ts,agent/extensions/github.ts,agent/lib/blob.ts,agent/lib/constants.ts,agent/lib/github/bootstrap-diagnostics.ts,agent/lib/github/bot-name.ts,agent/lib/github/credentials.ts,agent/lib/github/git-remote.ts,agent/lib/github/repo-sandbox.ts",
+        "arguments": "{\"file_path\":\"node_modules/eve/package.json\"}",
+        "error": "file \"node_modules/eve/package.json\" not found: git show feat/self-hosting:node_modules/eve/package.json: exit status 128: fatal: path 'node_modules/eve/package.json' exists on disk, but not in 'feat/self-hosting'\n"
+      }
+    ]
+  },
+  "comments": [
+    {
+      "path": "agent/lib/github/git-remote.ts",
+      "content": "Docker 后端下 arm 非原子:writeTextFile 成功后若 `git config` 这一步 run 失败(容器重启/HOME 不可写/exec 瞬时错误),异常在调用方进入 try 之前抛出——全部四处调用点(push_branch、两处 checkout_branch、factoryInit)都是 `await armGitCredentials(...)` 在 try 之外、disarm 在 finally 之中的写法,因此 disarm 永不执行,存活的 1 小时安装令牌留在 /tmp/.factory-git-credentials 直到会话结束,期间任何模型执行的命令(如 `cat /tmp/.factory-git-credentials`)都可读到,违反了本函数注释承诺的\"令牌仅存在于 arm 与 disarmGitCredentials 之间\"的降级契约。建议让 arm 自清理部分失败状态(覆盖全部调用点);同时建议 disarm 先删令牌文件再清 git config,避免 run 抛错时 removePath 被跳过、令牌文件滞留。",
+      "suggestion_code": "    await docker.writeTextFile({\n      content: `https://x-access-token:${token}@github.com\\n`,\n      path: DOCKER_CREDENTIAL_STORE,\n    });\n    try {\n      await docker.run({\n        command: `git config --global credential.helper 'store --file=${DOCKER_CREDENTIAL_STORE}'`,\n      });\n    } catch (error) {\n      await docker\n        .removePath({ force: true, path: DOCKER_CREDENTIAL_STORE })\n        .catch(() =\u003e {});\n      throw error;\n    }\n    return;",
+      "existing_code": "    await docker.writeTextFile({\n      content: `https://x-access-token:${token}@github.com\\n`,\n      path: DOCKER_CREDENTIAL_STORE,\n    });\n    await docker.run({\n      command: `git config --global credential.helper 'store --file=${DOCKER_CREDENTIAL_STORE}'`,\n    });\n    return;",
+      "start_line": 130,
+      "end_line": 137,
+      "thinking": "All writeDocument callers only use `pathname` (or ignore the result). The local backend returning `{ pathname: key }` is compatible. Good — no issue there.\n\nNow, the artifact tool uses `allowOverwrite: false` — this is the \"create once\" semantic. The TOCTOU race I considered: two concurrent save-artifact calls with the same kind+title (same id). In a single-session attended local run, tools run sequentially. Multiple concurrent sessions could produce the same artifact title... the id is derived from title+kind. Possible but rare and the consequence is a silent last-write-wins instead of a refusal. Still below the bar per \"宁可零意见\". I'll skip.\n\nFinal review summary per file:\n\n1. **agent/channels/github.ts** — doc-only changes; `credentials: githubCredentials` consumption matches new BYO export. No issues.\n2. **agent/extensions/github.ts** — connector→token swap consistent; no remaining GITHUB_CONNECTOR references. No issues (can't verify eve/extension types, no evidence of mismatch).\n3. **agent/lib/blob.ts** — local backend implementation correct: containment check solid, ENOENT semantics correct (including the throw-inside-try already-exists error which correctly rethrows), callers only consume `pathname`. Minor races (stat-then-write/unlink TOCTOU) below reporting bar.\n4. **agent/lib/constants.ts** — backend switch validated at load, fail-fast. requireEnv throws (confirmed). No issues.\n5. **agent/lib/github/bootstrap-diagnostics.ts** — message wording only. No issues.\n6. **agent/lib/github/bot-name.ts** — env-driven resolution, correct validation and error contract. No issues.\n7. **agent/lib/github/credentials.ts** — correct RS256 JWT minting, single-flight caching, bounded error excerpts without credentials. No stale references to GITHUB_CONNECTOR in agent code (only docs/.env.example, out of scope). No issues.\n8. **agent/lib/github/git-remote.ts** — **ONE ISSUE: armGitCredentials Docker partial failure leaks the token file beyond the armed window** (all call sites arm outside try; if the `git config` run fails after writeTextFile succeeded, disarm never runs and the live token stays in /tmp for the session). Also disarm's ordering (run before removePath) can strand the file if run throws. High/security.\n9. **agent/lib/github/repo-sandbox.ts** — factoryInit arm-outside-try pattern shares the same exposure; fixed by making arm self-cleaning (the comment on git-remote.ts covers the root cause; I'll mention the call sites in the comment text).\n\nWait — should I place a second comment on repo-sandbox.ts specifically? The instructions say review every file; cross-file observations encouraged. The root fix in git-remote.ts fully closes it. A separate comment on repo-sandbox.ts would say \"move armGitCredentials inside the try\" — which alone (without arm self-cleanup) ALSO fixes the leak path for factoryInit specifically (disarm would then run on arm failure). Both are valid single-point fixes; arm self-cleanup fixes all 4 call sites including the 2 station tools outside this review group. I'll go with the git-remote.ts comment as primary. To honor per-file review without noise, I'll keep just the one comment since repo-sandbox.ts's line is only problematic jointly with arm's non-atomicity — and the fix location is git-remote.ts. Actually, hmm — strictly, `await armGitCredentials(sandbox, token);` before `try {` in repo-sandbox.ts is itself the enabler *within that file*. If a reviewer only fixed repo-sandbox.ts (move arm into try), push/checkout (other files, not in this review) would still leak. The best single fix is in git-remote.ts. One comment. Final.\n\nLet me write the comment in Chinese, concise, with concrete failure scenario and suggestion code.",
+      "category": "security",
+      "severity": "high"
+    }
+  ],
+  "groups": [
+    {
+      "label": "GitHub integration core (channel, extension, credentials, remote, bot identity, diagnostics) with shared lib updates",
+      "files": [
+        "agent/channels/github.ts",
+        "agent/extensions/github.ts",
+        "agent/lib/blob.ts",
+        "agent/lib/constants.ts",
+        "agent/lib/github/bootstrap-diagnostics.ts",
+        "agent/lib/github/bot-name.ts",
+        "agent/lib/github/credentials.ts",
+        "agent/lib/github/git-remote.ts",
+        "agent/lib/github/repo-sandbox.ts"
+      ]
+    },
+    {
+      "label": "Sandbox management and subagent git branch/push tools",
+      "files": [
+        "agent/sandbox.ts",
+        "agent/subagents/implementer/tools/checkout_branch.ts",
+        "agent/subagents/implementer/tools/push_branch.ts",
+        "agent/subagents/reviewer/tools/checkout_branch.ts"
+      ]
+    },
+    {
+      "label": "Code review tooling: rules config and summary script",
+      "files": [".opencodereview/rule.json", "scripts/review_summary.py"]
+    }
+  ],
+  "session_id": "d69e1ef4-1cf4-4420-b8d3-84c97c5f831e",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "d69e1ef4-1cf4-4420-b8d3-84c97c5f831e",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "eec21556473e2f3b36dfc7a5da93b713cc2717fe29ff2ad405efec95ef03b192"
+    },
+    "input": {
+      "mode": "range",
+      "requested_from": "main",
+      "requested_head": "feat/self-hosting",
+      "resolved_base": "187bc462973f0b42b54aa071e402f62d59ad0ed8",
+      "resolved_head": "211d2351aa00f0700c29c8975b92871d5956210a",
+      "exact_range": "187bc462973f0b42b54aa071e402f62d59ad0ed8..211d2351aa00f0700c29c8975b92871d5956210a",
+      "source_artifact_sha256": "448b1d227c234e1be6a266b6feadd33bab5e43c13b310513ec0c96e7f7cf5ac4"
+    },
+    "execution": {
+      "ocr_version": "v1.12.13",
+      "model": "glm-5.3",
+      "configured_concurrency": 8,
+      "rule_config_sha256": "61efcd0aa5a260f9552ff26597e230b61b92f0ecda082b13070022b1a43fdc91",
+      "runtime_config_sha256": "841fe9ad288d2dd9efc84c443193c492ef06b26edf31ff5f5a1b01637fef2b0c"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "09f0a0aeabb4287a41b2e11ff555b4de48c338068de582f7be09b1b1f558faf1",
+          "path": ".opencodereview/rule.json",
+          "fingerprint": "b8999180ec6d9c11a0fe1871c0fa0e3912c762dbb0549cbb152d962aa5b1e97b"
+        },
+        {
+          "item_id": "20f3f0a3eacb7afd6e38eb116aa6d2f394cdb063473a3f335c51e023efe87563",
+          "path": "agent/subagents/reviewer/tools/checkout_branch.ts",
+          "fingerprint": "0ac2a805d87e5ceabc8fa82b20db7cac6557b3b46da0b2b1d112a42471f4ecf4"
+        },
+        {
+          "item_id": "4d73ea34f6d5e3402ce23697e6e5693bfe82fa5a7332433f6a264488636f8ae8",
+          "path": "agent/lib/github/bot-name.ts",
+          "fingerprint": "217aee092de79642d680b0f64744a21c9860759b61698f1c774dc8153b2a2473"
+        },
+        {
+          "item_id": "6b6497c3b88d0fc265c84a9b01d939ac5a795a88465fb5b954b69484f780ab43",
+          "path": "agent/lib/github/bootstrap-diagnostics.ts",
+          "fingerprint": "64ee195ccb2aab88aef8345239245df13ac1d7a8ee175a5496741a045939d4ca"
+        },
+        {
+          "item_id": "70d35d68a82e167ee125fa45ae37176bc3128cc5a56419f2b278c2c8f9c588af",
+          "path": "agent/lib/github/credentials.ts",
+          "fingerprint": "784424c34611657f7e9742631781b1fd7a074010699802b68e0499ab6fdd21e4"
+        },
+        {
+          "item_id": "839859e6d22b75e558b403d987e30b3e9f18e6d8712a6fd6d2e07dda9af96904",
+          "path": "agent/lib/github/repo-sandbox.ts",
+          "fingerprint": "fe1841a759f158c7f82dd6b6b493a05589bdc77fda1a8eff2b2dbd4a64379076"
+        },
+        {
+          "item_id": "8892145b2419140bd89f0d609c5ad71b9b5d7bd795805ab0f63135c7312e30bd",
+          "path": "agent/channels/github.ts",
+          "fingerprint": "0d520ab9e9b32b279de166f00436bc8e4e93f812fa85eb79d380cb0d509a58db"
+        },
+        {
+          "item_id": "8cb28a76e109917ec3fd474a4ab92d4f645e65bbe1d00bc920cd52113bc4038b",
+          "path": "agent/sandbox.ts",
+          "fingerprint": "de086654fc7679828108254800e015d5751c3e896da1387eaff1fd134e77db9b"
+        },
+        {
+          "item_id": "9ca7e79b40422a125b069998f4e366cded53822bf15fd826404c5fe00d27c571",
+          "path": "agent/lib/constants.ts",
+          "fingerprint": "86bfca2540877f1b40fffc3c4cd3d9d153a78b734aad3969dd86c50240088a86"
+        },
+        {
+          "item_id": "b5745ea70d412428a7716873c19ca90c57807b4e21230d020b77954e7ddfc997",
+          "path": "agent/lib/github/git-remote.ts",
+          "fingerprint": "0c87e9e8e006579e6f4ca3391147709146a805d835fdc42b92cd6765aa628e79"
+        },
+        {
+          "item_id": "b6a1ca1bfce2e2f9fb5e859be1ee8ecaa7d22b2ed3b98abc1988d56e91da4228",
+          "path": "agent/subagents/implementer/tools/checkout_branch.ts",
+          "fingerprint": "cb3242a37227588bf839fe79b93de4b9f5d78008a5faf06a29f658361c3fb1b9"
+        },
+        {
+          "item_id": "e15c865547217a46f7d31c8d1f348f9e259bd902a7d1a8b8d1b5649f836bcdf0",
+          "path": "agent/lib/blob.ts",
+          "fingerprint": "d0c1e1ca0c229ee5cfdc0da25347a23becfe133bce8605206debb82022f022af"
+        },
+        {
+          "item_id": "ebff2b5a9af1a223b32aac05b105c9c34b8650649a74d4ae2eb718d23ef3a770",
+          "path": "agent/extensions/github.ts",
+          "fingerprint": "27e1119c47f1a7feccd6a5442841135d2b673b5cc1ba5ad6c54563bbb227c440"
+        },
+        {
+          "item_id": "fb95e61217db97684aa3e534f6156a29e7de8c0baa4277cc262991149e85f4c7",
+          "path": "scripts/review_summary.py",
+          "fingerprint": "a2adb7c7208a91345e7f01a8bc6d6c2014f199b6a170b921e5b0e71e16b0f7da"
+        },
+        {
+          "item_id": "fc4c3f827150a78dd283aca8dd2f2c3c6b9c1e94b94cd74ad8b6d6997e6e907f",
+          "path": "agent/subagents/implementer/tools/push_branch.ts",
+          "fingerprint": "6a58b0e6c2409008dd9e41dc1eff721fa8b5684911055c2a3b9da30ca8e9d02e"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "09f0a0aeabb4287a41b2e11ff555b4de48c338068de582f7be09b1b1f558faf1",
+          "path": ".opencodereview/rule.json",
+          "fingerprint": "b8999180ec6d9c11a0fe1871c0fa0e3912c762dbb0549cbb152d962aa5b1e97b"
+        },
+        {
+          "item_id": "20f3f0a3eacb7afd6e38eb116aa6d2f394cdb063473a3f335c51e023efe87563",
+          "path": "agent/subagents/reviewer/tools/checkout_branch.ts",
+          "fingerprint": "0ac2a805d87e5ceabc8fa82b20db7cac6557b3b46da0b2b1d112a42471f4ecf4"
+        },
+        {
+          "item_id": "4d73ea34f6d5e3402ce23697e6e5693bfe82fa5a7332433f6a264488636f8ae8",
+          "path": "agent/lib/github/bot-name.ts",
+          "fingerprint": "217aee092de79642d680b0f64744a21c9860759b61698f1c774dc8153b2a2473"
+        },
+        {
+          "item_id": "6b6497c3b88d0fc265c84a9b01d939ac5a795a88465fb5b954b69484f780ab43",
+          "path": "agent/lib/github/bootstrap-diagnostics.ts",
+          "fingerprint": "64ee195ccb2aab88aef8345239245df13ac1d7a8ee175a5496741a045939d4ca"
+        },
+        {
+          "item_id": "70d35d68a82e167ee125fa45ae37176bc3128cc5a56419f2b278c2c8f9c588af",
+          "path": "agent/lib/github/credentials.ts",
+          "fingerprint": "784424c34611657f7e9742631781b1fd7a074010699802b68e0499ab6fdd21e4"
+        },
+        {
+          "item_id": "839859e6d22b75e558b403d987e30b3e9f18e6d8712a6fd6d2e07dda9af96904",
+          "path": "agent/lib/github/repo-sandbox.ts",
+          "fingerprint": "fe1841a759f158c7f82dd6b6b493a05589bdc77fda1a8eff2b2dbd4a64379076"
+        },
+        {
+          "item_id": "8892145b2419140bd89f0d609c5ad71b9b5d7bd795805ab0f63135c7312e30bd",
+          "path": "agent/channels/github.ts",
+          "fingerprint": "0d520ab9e9b32b279de166f00436bc8e4e93f812fa85eb79d380cb0d509a58db"
+        },
+        {
+          "item_id": "8cb28a76e109917ec3fd474a4ab92d4f645e65bbe1d00bc920cd52113bc4038b",
+          "path": "agent/sandbox.ts",
+          "fingerprint": "de086654fc7679828108254800e015d5751c3e896da1387eaff1fd134e77db9b"
+        },
+        {
+          "item_id": "9ca7e79b40422a125b069998f4e366cded53822bf15fd826404c5fe00d27c571",
+          "path": "agent/lib/constants.ts",
+          "fingerprint": "86bfca2540877f1b40fffc3c4cd3d9d153a78b734aad3969dd86c50240088a86"
+        },
+        {
+          "item_id": "b5745ea70d412428a7716873c19ca90c57807b4e21230d020b77954e7ddfc997",
+          "path": "agent/lib/github/git-remote.ts",
+          "fingerprint": "0c87e9e8e006579e6f4ca3391147709146a805d835fdc42b92cd6765aa628e79"
+        },
+        {
+          "item_id": "b6a1ca1bfce2e2f9fb5e859be1ee8ecaa7d22b2ed3b98abc1988d56e91da4228",
+          "path": "agent/subagents/implementer/tools/checkout_branch.ts",
+          "fingerprint": "cb3242a37227588bf839fe79b93de4b9f5d78008a5faf06a29f658361c3fb1b9"
+        },
+        {
+          "item_id": "e15c865547217a46f7d31c8d1f348f9e259bd902a7d1a8b8d1b5649f836bcdf0",
+          "path": "agent/lib/blob.ts",
+          "fingerprint": "d0c1e1ca0c229ee5cfdc0da25347a23becfe133bce8605206debb82022f022af"
+        },
+        {
+          "item_id": "ebff2b5a9af1a223b32aac05b105c9c34b8650649a74d4ae2eb718d23ef3a770",
+          "path": "agent/extensions/github.ts",
+          "fingerprint": "27e1119c47f1a7feccd6a5442841135d2b673b5cc1ba5ad6c54563bbb227c440"
+        },
+        {
+          "item_id": "fb95e61217db97684aa3e534f6156a29e7de8c0baa4277cc262991149e85f4c7",
+          "path": "scripts/review_summary.py",
+          "fingerprint": "a2adb7c7208a91345e7f01a8bc6d6c2014f199b6a170b921e5b0e71e16b0f7da"
+        },
+        {
+          "item_id": "fc4c3f827150a78dd283aca8dd2f2c3c6b9c1e94b94cd74ad8b6d6997e6e907f",
+          "path": "agent/subagents/implementer/tools/push_branch.ts",
+          "fingerprint": "6a58b0e6c2409008dd9e41dc1eff721fa8b5684911055c2a3b9da30ca8e9d02e"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": []
+    },
+    "elapsed_ms": 907318
+  }
+}
