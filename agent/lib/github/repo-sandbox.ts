@@ -1,9 +1,9 @@
-import type { VercelSandboxSession } from "eve/sandbox/vercel";
+import { DockerSandbox } from "eve/sandbox/docker";
 import {
   VercelSandbox,
   type VercelSandboxEnvironmentOptions,
 } from "eve/sandbox/vercel";
-import { FACTORY_REPO } from "../constants.js";
+import { DOCKER_SANDBOX_BACKEND, FACTORY_REPO } from "../constants.js";
 import {
   appAccessMessage,
   describeCloneFailure,
@@ -11,17 +11,18 @@ import {
   sanitizeCommandOutput,
 } from "./bootstrap-diagnostics.js";
 import { FALLBACK_BOT_NAME, resolveBotName } from "./bot-name.js";
-import { githubCredentials } from "./credentials.js";
+import { mintInstallationToken } from "./credentials.js";
 import {
-  brokerPolicy,
-  mintInstallationToken,
+  armGitCredentials,
+  disarmGitCredentials,
+  type FactorySandboxSession,
   REMOTE_URL,
 } from "./git-remote.js";
 
-// Snapshot settings shared by every factory sandbox environment. One kept
-// snapshot keeps storage flat across template rebuilds; the 14-day expiration
-// (Vercel removes unresumable sandboxes after 14 days anyway) stops a quiet
-// stretch from expiring the template.
+// Snapshot settings shared by every factory sandbox environment on the
+// Vercel backend. One kept snapshot keeps storage flat across template
+// rebuilds; the 14-day expiration (Vercel removes unresumable sandboxes
+// after 14 days anyway) stops a quiet stretch from expiring the template.
 export const FACTORY_SANDBOX_CREATE_OPTIONS = {
   keepLastSnapshots: { count: 1, deleteEvicted: true },
   resources: { vcpus: 4 },
@@ -29,15 +30,20 @@ export const FACTORY_SANDBOX_CREATE_OPTIONS = {
 } satisfies VercelSandboxEnvironmentOptions;
 
 /**
- * Creates a station's Vercel Sandbox environment.
+ * Creates a station's sandbox environment on the configured backend: a
+ * local Docker container (eve's default image) or a hosted Vercel Sandbox.
  *
  * @remarks
  * Each station calls this from its own `sandbox.ts`, so the environment's
- * generation is keyed to that file, the same as authoring `VercelSandbox
- * .environment()` directly there would be.
+ * generation is keyed to that file, the same as authoring the environment
+ * directly there would be. The backend follows `FACTORY_SANDBOX_BACKEND`,
+ * which the credential arming in `git-remote.ts` reads too, so a session
+ * and its git credentials always travel the same way.
  */
 export function createFactoryEnvironment() {
-  return VercelSandbox.environment(FACTORY_SANDBOX_CREATE_OPTIONS);
+  return DOCKER_SANDBOX_BACKEND
+    ? DockerSandbox.environment()
+    : VercelSandbox.environment(FACTORY_SANDBOX_CREATE_OPTIONS);
 }
 
 /**
@@ -46,7 +52,7 @@ export function createFactoryEnvironment() {
  * out repository behind.
  */
 async function runOrThrow(
-  sandbox: VercelSandboxSession,
+  sandbox: FactorySandboxSession,
   command: string
 ): Promise<void> {
   const result = await sandbox.run({ command });
@@ -61,10 +67,10 @@ async function runOrThrow(
   }
 }
 
-// Mints the brokered installation token, translating a refusal (typically
-// "App authorization required" from Connect) into the actionable message.
-// The original error rides along as the cause; the token itself never
-// appears in either.
+// Mints the installation token, translating a refusal (typically an App
+// credential or installation problem) into the actionable message. The
+// original error rides along as the cause; the token itself never appears
+// in either.
 async function mintTokenOrExplain(
   mint: () => Promise<string>
 ): Promise<string> {
@@ -82,14 +88,14 @@ async function mintTokenOrExplain(
 const SAFE_BOT_NAME = /^[A-Za-z0-9._-]+$/;
 
 /**
- * The bot's commit identity, from the connector-resolved name.
+ * The bot's commit identity, from the env-resolved name.
  *
  * @remarks
  * Falls back to the static default when resolution fails (a commit identity
- * is needed even when the connector metadata is briefly unreachable) or when
- * the resolved name carries characters that don't belong in a shell-quoted
- * git config value; connector app slugs never do, but the name can also
- * arrive from an env override.
+ * is needed even when the App slug is not configured) or when the resolved
+ * name carries characters that don't belong in a shell-quoted git config
+ * value; App slugs never do, but the name can also arrive from an env
+ * override.
  */
 async function gitIdentity(): Promise<{ email: string; name: string }> {
   const resolved = await resolveBotName().catch(() => FALLBACK_BOT_NAME);
@@ -106,15 +112,16 @@ async function gitIdentity(): Promise<{ email: string; name: string }> {
  * clone the factory repository.
  *
  * @remarks
- * - eve's build-time snapshot `prepare()` sandbox has no `setNetworkPolicy`
+ * - eve's build-time snapshot `prepare()` sandbox has no credential arming
  *   (only a session-scoped sandbox from `environment.open()` does), so the
  *   credentialed clone that used to run once per template, shared by every
  *   session, now runs once per session instead: a session pays a full clone
- *   rather than the shallow fetch a pre-cloned snapshot used to leave it. The
- *   clone still authenticates through the sandbox firewall (the installation
- *   token is injected as a header transform and never enters the sandbox),
- *   and `FACTORY_SETUP_COMMAND` (e.g. `pnpm install`) still runs inside the
- *   fresh checkout when set.
+ *   rather than the shallow fetch a pre-cloned snapshot used to leave it.
+ *   The clone authenticates through {@link armGitCredentials}, which keeps
+ *   the token out of the sandbox on the Vercel backend and confines it to a
+ *   file-backed credential helper on Docker (removed again in the
+ *   `finally`), and `FACTORY_SETUP_COMMAND` (e.g. `pnpm install`) still runs
+ *   inside the fresh checkout when set.
  * - The template snapshot is owned by the builder uid, not the session user;
  *   without the `safe.directory` entries every git command dies on "dubious
  *   ownership".
@@ -123,17 +130,15 @@ async function gitIdentity(): Promise<{ email: string; name: string }> {
  *   cause, and never carry the token.
  */
 export async function factoryInit(
-  sandbox: VercelSandboxSession
+  sandbox: FactorySandboxSession
 ): Promise<void> {
   const identity = await gitIdentity();
   await runOrThrow(
     sandbox,
     `git config --global --add safe.directory /workspace && git config --global --add safe.directory /workspace/repo && git config --global user.name "${identity.name}" && git config --global user.email "${identity.email}"`
   );
-  const token = await mintTokenOrExplain(() =>
-    mintInstallationToken(githubCredentials)
-  );
-  await sandbox.setNetworkPolicy(brokerPolicy(token));
+  const token = await mintTokenOrExplain(() => mintInstallationToken());
+  await armGitCredentials(sandbox, token);
   try {
     try {
       await runOrThrow(sandbox, `git clone --depth 50 ${REMOTE_URL} repo`);
@@ -148,6 +153,6 @@ export async function factoryInit(
       await runOrThrow(sandbox, `cd repo && ${setup}`);
     }
   } finally {
-    await sandbox.setNetworkPolicy("allow-all");
+    await disarmGitCredentials(sandbox);
   }
 }

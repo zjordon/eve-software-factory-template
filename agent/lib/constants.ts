@@ -82,6 +82,34 @@ export const FACTORY_BRANCH_PREFIX =
   process.env.FACTORY_BRANCH_PREFIX ?? "factory/";
 
 /**
+ * Which sandbox backend the factory's sandboxes open.
+ *
+ * @remarks
+ * `"vercel"` (the default) opens hosted Vercel Sandboxes and brokers the
+ * git credential at the sandbox firewall; `"docker"` opens local Docker
+ * containers and passes the credential through an in-container git
+ * credential helper instead. The switch is read by every factory sandbox
+ * environment (root and stations) plus the git credential arm/disarm pair
+ * in `agent/lib/github/git-remote.ts`, so both halves of a session always
+ * agree on how credentials travel.
+ */
+const FACTORY_SANDBOX_BACKEND = process.env.FACTORY_SANDBOX_BACKEND ?? "vercel";
+
+if (
+  FACTORY_SANDBOX_BACKEND !== "vercel" &&
+  FACTORY_SANDBOX_BACKEND !== "docker"
+) {
+  throw new Error(
+    `FACTORY_SANDBOX_BACKEND must be "vercel" or "docker" (e.g. 'docker'), got '${FACTORY_SANDBOX_BACKEND}'.`
+  );
+}
+
+/**
+ * Whether the factory runs on the local Docker sandbox backend.
+ */
+export const DOCKER_SANDBOX_BACKEND = FACTORY_SANDBOX_BACKEND === "docker";
+
+/**
  * Shared Linear authorization via Vercel Connect.
  *
  * Single source of truth for the Linear connector so every consumer — the

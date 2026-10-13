@@ -1,10 +1,10 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { FACTORY_BRANCH_PREFIX } from "../../../lib/constants.js";
-import { githubCredentials } from "../../../lib/github/credentials.js";
+import { mintInstallationToken } from "../../../lib/github/credentials.js";
 import {
-  brokerPolicy,
-  mintInstallationToken,
+  armGitCredentials,
+  disarmGitCredentials,
   REMOTE_URL,
   REPO_DIR,
   validateBranch,
@@ -16,10 +16,12 @@ import { environment } from "../sandbox.js";
  * revision runs that continue work the reviewer sent back.
  *
  * @remarks
- * The fetch targets the factory repository's URL literally with a credential
- * brokered at the sandbox firewall (never entering the sandbox), mirroring
- * `push_branch`. `validateBranch` bounds what can be interpolated into the
- * git command line.
+ * The fetch targets the factory repository's URL literally with the
+ * credential armed for the fetch and dropped again in the `finally`
+ * (`armGitCredentials`/`disarmGitCredentials`: firewall injection on Vercel,
+ * a removed-again credential helper on Docker), mirroring `push_branch`.
+ * `validateBranch` bounds what can be interpolated into the git command
+ * line.
  */
 export default defineTool({
   description: `Fetch an existing branch of the factory repository and check it out in ${REPO_DIR}. Use this on a revision run, when the reviewer's findings name a branch that already exists; fresh work starts from the default branch with plain git instead.`,
@@ -29,8 +31,8 @@ export default defineTool({
       return { error: refusal, success: false as const };
     }
     const sandbox = await ctx.getSandbox(environment);
-    const token = await mintInstallationToken(githubCredentials);
-    await sandbox.setNetworkPolicy(brokerPolicy(token));
+    const token = await mintInstallationToken();
+    await armGitCredentials(sandbox, token);
     try {
       const fetch = await sandbox.run({
         command: `git -C ${REPO_DIR} fetch ${REMOTE_URL} '${input.branch}' && git -C ${REPO_DIR} checkout -B '${input.branch}' FETCH_HEAD`,
@@ -52,7 +54,7 @@ export default defineTool({
         success: true as const,
       };
     } finally {
-      await sandbox.setNetworkPolicy("allow-all");
+      await disarmGitCredentials(sandbox);
     }
   },
   inputSchema: z.object({

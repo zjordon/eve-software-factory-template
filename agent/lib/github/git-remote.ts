@@ -1,6 +1,11 @@
-import type { GitHubChannelCredentials } from "eve/channels/github";
 import type { SandboxNetworkPolicy } from "eve/sandbox";
-import { FACTORY_BRANCH_PREFIX, FACTORY_REPO } from "../constants.js";
+import type { DockerSandboxSession } from "eve/sandbox/docker";
+import type { VercelSandboxSession } from "eve/sandbox/vercel";
+import {
+  DOCKER_SANDBOX_BACKEND,
+  FACTORY_BRANCH_PREFIX,
+  FACTORY_REPO,
+} from "../constants.js";
 
 const PROTECTED_BRANCHES = new Set(["main", "master"]);
 
@@ -86,14 +91,70 @@ export function brokerPolicy(installationToken: string): SandboxNetworkPolicy {
 }
 
 /**
- * Resolves the Connect-managed installation token, minting when it is lazy.
+ * A sandbox session from either factory backend: hosted Vercel (firewall
+ * credential injection) or local Docker (credential-helper injection).
  */
-export async function mintInstallationToken(
-  credentials: GitHubChannelCredentials
-): Promise<string> {
-  const token = credentials.installationToken;
-  if (token === undefined) {
-    throw new Error("The GitHub connector exposes no installation token.");
+export type FactorySandboxSession = DockerSandboxSession | VercelSandboxSession;
+
+/**
+ * Where the Docker backend keeps the git credential store during an armed
+ * window. Outside /workspace so no model-authored file operation stumbles
+ * over it by accident.
+ */
+const DOCKER_CREDENTIAL_STORE = "/tmp/.factory-git-credentials";
+
+/**
+ * Makes the installation token usable by git inside the sandbox for the
+ * duration of one credentialed operation.
+ *
+ * @remarks
+ * Vercel backend: the token is brokered at the sandbox firewall (header
+ * injection on egress to github.com only) and never enters the sandbox.
+ * Docker backend: the firewall has no injection capability (coarse
+ * policies only), so the token is written to a file-backed git credential
+ * helper instead. That is the documented self-hosting downgrade: the token
+ * is short-lived (one hour), lives only between this call and
+ * {@link disarmGitCredentials}, and never appears in a shell command line
+ * (the file is written through sandbox file I/O, not `run`).
+ *
+ * The backend is read from the same `FACTORY_SANDBOX_BACKEND` switch that
+ * picked the environment, so the arming always matches the session type;
+ * the casts below hold by that construction.
+ */
+export async function armGitCredentials(
+  sandbox: FactorySandboxSession,
+  token: string
+): Promise<void> {
+  if (DOCKER_SANDBOX_BACKEND) {
+    const docker = sandbox as DockerSandboxSession;
+    await docker.writeTextFile({
+      content: `https://x-access-token:${token}@github.com\n`,
+      path: DOCKER_CREDENTIAL_STORE,
+    });
+    await docker.run({
+      command: `git config --global credential.helper 'store --file=${DOCKER_CREDENTIAL_STORE}'`,
+    });
+    return;
   }
-  return typeof token === "function" ? await token() : token;
+  await (sandbox as VercelSandboxSession).setNetworkPolicy(brokerPolicy(token));
+}
+
+/**
+ * Drops the credential again after a credentialed operation, in a
+ * `finally`: Vercel reopens general egress, Docker removes the credential
+ * store file and its git config entry.
+ */
+export async function disarmGitCredentials(
+  sandbox: FactorySandboxSession
+): Promise<void> {
+  if (DOCKER_SANDBOX_BACKEND) {
+    const docker = sandbox as DockerSandboxSession;
+    await docker.run({
+      command:
+        "git config --global --unset-all credential.helper >/dev/null 2>&1 || true",
+    });
+    await docker.removePath({ force: true, path: DOCKER_CREDENTIAL_STORE });
+    return;
+  }
+  await (sandbox as VercelSandboxSession).setNetworkPolicy("allow-all");
 }

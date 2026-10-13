@@ -1,10 +1,10 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { FACTORY_BRANCH_PREFIX } from "../../../lib/constants.js";
-import { githubCredentials } from "../../../lib/github/credentials.js";
+import { mintInstallationToken } from "../../../lib/github/credentials.js";
 import {
-  brokerPolicy,
-  mintInstallationToken,
+  armGitCredentials,
+  disarmGitCredentials,
   REMOTE_URL,
   REPO_DIR,
   validateBranch,
@@ -20,10 +20,11 @@ import { environment } from "../sandbox.js";
  * `validateBranch` refuses `main`, `master`, anything that isn't a plain
  * branch name, and anything outside the factory branch prefix, so nothing
  * this tool does can change the default branch, merge, or deliver a branch
- * whose pull requests the fix loop would ignore. The credential is brokered
- * at the sandbox firewall and never enters the sandbox, and the push targets
+ * whose pull requests the fix loop would ignore. The credential is armed
+ * for the push and dropped again in the `finally`
+ * (`armGitCredentials`/`disarmGitCredentials`: firewall injection on Vercel,
+ * a removed-again credential helper on Docker), and the push targets
  * {@link REMOTE_URL} literally, never the model-writable `origin` remote.
- * The `finally` block drops the brokered credential again.
  */
 export default defineTool({
   description: `Push a local branch of the ${REPO_DIR} checkout to the factory repository. The branch must already exist locally with the work committed and the checks run; main and master are refused, and the branch name must start with "${FACTORY_BRANCH_PREFIX}". After a successful push, report the branch name in your structured output so the orchestrator can open the pull request.`,
@@ -33,8 +34,8 @@ export default defineTool({
       return { error: refusal, success: false as const };
     }
     const sandbox = await ctx.getSandbox(environment);
-    const token = await mintInstallationToken(githubCredentials);
-    await sandbox.setNetworkPolicy(brokerPolicy(token));
+    const token = await mintInstallationToken();
+    await armGitCredentials(sandbox, token);
     try {
       const push = await sandbox.run({
         command: `git -C ${REPO_DIR} push ${REMOTE_URL} 'refs/heads/${input.branch}:refs/heads/${input.branch}'`,
@@ -56,7 +57,7 @@ export default defineTool({
         success: true as const,
       };
     } finally {
-      await sandbox.setNetworkPolicy("allow-all");
+      await disarmGitCredentials(sandbox);
     }
   },
   inputSchema: z.object({
