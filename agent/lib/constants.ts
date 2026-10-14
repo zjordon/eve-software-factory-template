@@ -1,5 +1,3 @@
-import { connect } from "@vercel/connect/eve";
-
 /**
  * Reads a required environment variable, throwing if it is unset so
  * misconfiguration fails fast instead of surfacing mid-request.
@@ -108,32 +106,3 @@ if (
  * Whether the factory runs on the local Docker sandbox backend.
  */
 export const DOCKER_SANDBOX_BACKEND = FACTORY_SANDBOX_BACKEND === "docker";
-
-/**
- * Shared Linear authorization via Vercel Connect.
- *
- * Single source of truth for the Linear connector so every consumer — the
- * Linear MCP connection and any tool calling the GraphQL API directly —
- * shares one Linear installation and one set of scopes.
- *
- * @remarks
- * - App-scoped (`principalType: "app"`), so no per-user consent flow is
- *   required; tokens are minted for the installation itself.
- * - Tokens are requested per call via `ctx.getToken(linearAuth)`, cached per
- *   step by eve, and never exposed to the model.
- * - The connector UID comes from the `LINEAR_CONNECTOR` environment variable
- *   (e.g. `linear/foreman-agent`); the module throws at load time if it
- *   is not set.
- *
- * @example
- * ```ts
- * const { token } = await ctx.getToken(linearAuth);
- * ```
- */
-export const linearAuth = connect({
-  connector: requireEnv("LINEAR_CONNECTOR", "linear/foreman-agent"),
-  principalType: "app",
-  tokenParams: {
-    scopes: ["read", "write", "issues:create", "comments:create"],
-  },
-});
