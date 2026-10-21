@@ -209,6 +209,16 @@ issue 打 factory 标签
 | 偏好 / 工厂大脑 / 工件 | `FACTORY_DATA_DIR`(默认 `.eve/blob-data/`) | 是(M4) |
 | git 线程记忆(CI 修复环计数) | GitHub PR 评论(远端) | 随仓库 |
 
+### 2.8 常驻运行形态(M2 实测布局,2026-10-21)
+
+- **常驻宿主**:专用 Ubuntu 机(24.04,ext4 根卷),内网地址 `192.168.5.7`。工厂以 pm2 托管 `pnpm exec eve start --host 0.0.0.0 --port 3000`(进程名 foreman-local,`ecosystem.config.cjs` 入库可移植);经 eve CLI 启动而非直跑 `.output`,以保留 CLI 对 `.env.local` 的运行时加载。
+- **工具链版本钉死**:nvm 隔离 Node 24 LTS(`engines` 钉 24.x,系统默认 v25 不受影响);pm2 systemd 单元(pm2-jasonzhang)的 `Environment=PATH` 钉 v24 目录。陷阱:单元生成会把执行时 shell 的整个 `$PATH` 拼进去,nvm 多版本共存时其他版本目录可能排前,冷启全链解析漂移——生成后必查该行。
+- **鉴权**:路由 Basic(`ROUTE_AUTH_BASIC_*`),health 端点公开拨测;矩阵实测:无凭据 401 + Basic challenge / 正确凭据 202 / health 恒 200。
+- **开机链路(冷启实测)**:systemd → pm2 resurrect(应用来自 dump.pm2,logrotate 模块自行恢复)→ health 200 用时 18.6s;docker socket 激活回归;重启前创建的会话跨冷启续话 202——`.workflow-data` 整机重启不丢。
+- **数据**:`.eve/.workflow-data` 与 `FACTORY_DATA_DIR` 均落仓库 cwd 下、ext4 根卷;pm2 restart 与整机重启两类持久性均已实证。
+- **凭据落点**:`.env.local`(600)在仓库根(gitignored);App 私钥 `~/.secrets/`(600);两者不经会话明文,迁移时 scp 直落位。
+- **Windows 侧接入**:`eve remote connect -u http://192.168.5.7:3000 -H "Authorization: Basic <b64>"`(内网直连,M3 隧道化后获 HTTPS)。
+
 ## 3. 依赖关系
 
 ### 3.1 外部服务依赖(自托管形态)
@@ -218,7 +228,7 @@ issue 打 factory 标签
 | GitHub(API + git + webhook) | 工单源、交付目标、事件入口 | 出站 API/git;入站仅 webhook(经隧道) |
 | 智谱 GLM API | 全部六类模型调用 | 出站 |
 | cloudflared | webhook 公网 HTTPS 入口 | 常驻隧道进程 |
-| Docker Desktop(WSL2 后端) | 站点沙箱容器 | 本机 |
+| Docker Engine(直装,常驻 Ubuntu 机,socket 激活) | 站点沙箱容器 | 本机 |
 
 ### 3.2 代码依赖变化
 
