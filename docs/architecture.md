@@ -217,7 +217,8 @@ issue 打 factory 标签
 - **开机链路(冷启实测)**:systemd → pm2 resurrect(应用来自 dump.pm2,logrotate 模块自行恢复)→ health 200 用时 18.6s;docker socket 激活回归;重启前创建的会话跨冷启续话 202——`.workflow-data` 整机重启不丢。
 - **数据**:`.eve/.workflow-data` 与 `FACTORY_DATA_DIR` 均落仓库 cwd 下、ext4 根卷;pm2 restart 与整机重启两类持久性均已实证。
 - **凭据落点**:`.env.local`(600)在仓库根(gitignored);App 私钥 `~/.secrets/`(600);两者不经会话明文,迁移时 scp 直落位。
-- **Windows 侧接入**:`eve remote connect -u http://192.168.5.7:3000 -H "Authorization: Basic <b64>"`(内网直连,M3 隧道化后获 HTTPS)。
+- **Windows 侧接入(2026-10-31 实测修正)**:`eve remote connect` 对非 localhost 主机**强制 HTTPS**,LAN 直连 `http://192.168.5.7:3000` 被 CLI 拒收(`-H` 头不豁免)。临时方案 = SSH 端口转发(`ssh -N -L 3000:localhost:3000 -o ServerAliveInterval=30 用户@192.168.5.7` 挂住后连 `http://localhost:3000`,带 `Authorization: Basic <b64>` 头;隧道进程退出会让 TUI 抱死连接、发送报 fetch failed,须保持挂住);正式 HTTPS 随 M3 cloudflared 隧道。
+- **Basic 主体行为**:无受信盖章——GitHub 写操作走审批卡、`update_factory_brain` 挂起等人批(§2.5 信任模型在远程常驻形态原样生效,2026-10-31 真实回合现场验证)。
 
 ## 3. 依赖关系
 
