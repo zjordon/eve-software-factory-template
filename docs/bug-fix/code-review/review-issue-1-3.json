@@ -28,10 +28,7 @@
   "groups": [
     {
       "label": "small change set",
-      "files": [
-        "agent/lib/github/repo-sandbox.ts",
-        "agent/sandbox/Dockerfile"
-      ]
+      "files": ["agent/lib/github/repo-sandbox.ts", "agent/sandbox/Dockerfile"]
     }
   ],
   "session_id": "3ddf2ffc-9a98-43e9-8c87-250ca1401056",
