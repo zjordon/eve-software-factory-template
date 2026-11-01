@@ -16,10 +16,16 @@ stamp=$(date +%Y%m%d-%H%M%S)
 mkdir -p "$DEST"
 
 # --ignore-failed-read: a file vanishing mid-read (turn rotated between tar's
-# walk and read) must not void the whole archive.
+# walk and read) must not void the whole archive. Separately, GNU tar exits 1
+# on "file changed as we read it" (a live turn appending events): warnings
+# only, the archive is still a valid best-effort snapshot. Only exit >= 2 is
+# fatal; tolerate 1 explicitly, or set -e would abort before pruning and the
+# integrity gate on every night that overlaps a running turn.
+tar_rc=0
 tar -czf "$DEST/factory-data-$stamp.tar.gz" \
   --ignore-failed-read \
-  -C "$REPO/.eve" .workflow-data blob-data 2>/dev/null
+  -C "$REPO/.eve" .workflow-data blob-data 2>/dev/null || tar_rc=$?
+[ "$tar_rc" -le 1 ] || exit "$tar_rc"
 
 # Bounded retention: newest KEEP archives stay.
 ls -1t "$DEST"/factory-data-*.tar.gz | tail -n +$((KEEP + 1)) | while read -r old; do
