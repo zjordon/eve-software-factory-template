@@ -30,8 +30,24 @@ export const FACTORY_SANDBOX_CREATE_OPTIONS = {
 } satisfies VercelSandboxEnvironmentOptions;
 
 /**
+ * The station sandbox image, built from the single `agent/sandbox/Dockerfile`
+ * (git + Python 3.12 + uv + Chromium, master plan item #8).
+ *
+ * @remarks
+ * A stable local tag, not the Dockerfile convention: stations' sandbox file
+ * sets live in their own directories, so a colocated Dockerfile resolves only
+ * for the root agent and a station silently falls back to eve's default
+ * image. Referencing the image explicitly bakes it into the environment's
+ * options hash, which turns every station's template generation when the
+ * image changes. Deployment prerequisite: `docker build -t foreman-station:1
+ * agent/sandbox/` before `eve build` (see docs/implement-plan/M3-无人值守.md).
+ */
+const STATION_IMAGE = "foreman-station:1";
+
+/**
  * Creates a station's sandbox environment on the configured backend: a
- * local Docker container (eve's default image) or a hosted Vercel Sandbox.
+ * local Docker container from {@link STATION_IMAGE} or a hosted Vercel
+ * Sandbox.
  *
  * @remarks
  * Each station calls this from its own `sandbox.ts`, so the environment's
@@ -42,7 +58,7 @@ export const FACTORY_SANDBOX_CREATE_OPTIONS = {
  */
 export function createFactoryEnvironment() {
   return DOCKER_SANDBOX_BACKEND
-    ? DockerSandbox.environment()
+    ? DockerSandbox.image(STATION_IMAGE)
     : VercelSandbox.environment(FACTORY_SANDBOX_CREATE_OPTIONS);
 }
 
