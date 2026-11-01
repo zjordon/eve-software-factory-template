@@ -39,10 +39,10 @@ export const FACTORY_SANDBOX_CREATE_OPTIONS = {
  * for the root agent and a station silently falls back to eve's default
  * image. Referencing the image explicitly bakes it into the environment's
  * options hash, which turns every station's template generation when the
- * image changes. Deployment prerequisite: `docker build -t foreman-station:1
+ * image changes. Deployment prerequisite: `docker build -t foreman-station:2
  * agent/sandbox/` before `eve build` (see docs/implement-plan/M3-无人值守.md).
  */
-const STATION_IMAGE = "foreman-station:1";
+const STATION_IMAGE = "foreman-station:2";
 
 /**
  * Creates a station's sandbox environment on the configured backend: a

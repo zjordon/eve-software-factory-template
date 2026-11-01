@@ -20,6 +20,18 @@ RUN uv pip install --system playwright \
   && playwright install --with-deps chromium \
   && rm -rf /var/lib/apt/lists/*
 
+# Google Chrome stable from Google's own apt repo: the target repo's e2e
+# conftest launches channel="chrome" (the real Chrome distribution, not
+# Playwright's bundled Chromium) and skips the whole e2e suite when it is
+# missing. Baked at image build time, so no script ever downloads a browser
+# at run time (the target repo's own hard constraint stays honored).
+RUN install -d -m 0755 /etc/apt/keyrings \
+  && curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub -o /etc/apt/keyrings/google-chrome.asc \
+  && echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.asc] https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends google-chrome-stable \
+  && rm -rf /var/lib/apt/lists/*
+
 # factoryInit clones into /workspace/repo and pre-registers safe.directory
 # entries for /workspace and /workspace/repo, so the workdir must stay this.
 WORKDIR /workspace
