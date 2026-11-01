@@ -217,8 +217,16 @@ issue 打 factory 标签
 - **开机链路(冷启实测)**:systemd → pm2 resurrect(应用来自 dump.pm2,logrotate 模块自行恢复)→ health 200 用时 18.6s;docker socket 激活回归;重启前创建的会话跨冷启续话 202——`.workflow-data` 整机重启不丢。
 - **数据**:`.eve/.workflow-data` 与 `FACTORY_DATA_DIR` 均落仓库 cwd 下、ext4 根卷;pm2 restart 与整机重启两类持久性均已实证。
 - **凭据落点**:`.env.local`(600)在仓库根(gitignored);App 私钥 `~/.secrets/`(600);两者不经会话明文,迁移时 scp 直落位。
-- **Windows 侧接入(2026-10-31 实测修正)**:`eve remote connect` 对非 localhost 主机**强制 HTTPS**,LAN 直连 `http://192.168.5.7:3000` 被 CLI 拒收(`-H` 头不豁免)。临时方案 = SSH 端口转发(`ssh -N -L 3000:localhost:3000 -o ServerAliveInterval=30 用户@192.168.5.7` 挂住后连 `http://localhost:3000`,带 `Authorization: Basic <b64>` 头;隧道进程退出会让 TUI 抱死连接、发送报 fetch failed,须保持挂住);正式 HTTPS 随 M3 cloudflared 隧道。
+- **Windows 侧接入(2026-10-31 实测修正,2026-11-01 更新)**:`eve remote connect` 对非 localhost 主机**强制 HTTPS**,LAN 直连 `http://192.168.5.7:3000` 被 CLI 拒收(`-H` 头不豁免)。正式方案已随 M3 落地:`eve remote connect -u https://factory.zjordon.com -H "Authorization: Basic <b64>"`(命名隧道即 HTTPS 入口);SSH 端口转发降级为隧道不可用时的事实备份。
 - **Basic 主体行为**:无受信盖章——GitHub 写操作走审批卡、`update_factory_brain` 挂起等人批(§2.5 信任模型在远程常驻形态原样生效,2026-10-31 真实回合现场验证)。
+
+### 2.9 无人值守入口(M3 实测,2026-11-01)
+
+- **webhook 入口**:GitHub App webhook 指向 `https://factory.zjordon.com/eve/v1/github`,经 cloudflared 命名隧道 `foreman-local`(systemd 常驻,service restart 实测恒达亚秒恢复)抵 `localhost:3000`。secret 走 `GITHUB_WEBHOOK_SECRET` HMAC 校验,已轮换为真随机值并端到端验证。
+- **鉴权分层(实测口径)**:route auth 只守 4 组会话路由(session 创建/续话/cancel 族/stream);webhook 路由不在 Basic 走查范围,由签名校验独立把关——无人值守与 Basic 鉴权共存,零改造。`/.well-known/workflow/` 前缀经隧道透传无改写(workflow 回调依赖)。
+- **事件流**:issue 打 `factory` 标签(`labeled` 动作,含建单时带标签)→ 派发自治主体 → 四站 → 草稿 PR → 机器人回帖;@提及走 OWNER/MEMBER/COLLABORATOR 受信路径。全链 2026-10-31/11-01 双隧道(quick/named)各实测一轮,约 7 分钟;examination-system 接管轮约 30 分钟(含每站全量 uv sync 首次开销)。
+- **站点沙箱镜像**:`agent/sandbox/Dockerfile`(python:3.12-slim + git + uv + Chromium baked,约 2.07GB)构建为本地标签 `foreman-station:1`,各站 `createFactoryEnvironment` 经 `DockerSandbox.image()` 显式引用。**部署契约:`eve build` 前必须先 `docker build -t foreman-station:1 agent/sandbox/`**;镜像标签进位会翻转全部站点模板世代键,自动重建。教训存档:`DockerSandbox.dockerfile()` 的文件集发现按各 agent 自身目录解析,子代理目录无 Dockerfile 时**静默回落默认镜像**——共享工厂能力用显式引用,不靠约定。
+- **pm2 环境缓存(运维口径)**:pm2 在 start 时捕获的 env 会注入子进程并覆盖 `.env.local` 所载,`--update-env` 清不净 dump——env 变更的正确姿势是 `pm2 delete` + 干净 shell 全新 `start` + `pm2 save`。
 
 ## 3. 依赖关系
 
@@ -228,7 +236,7 @@ issue 打 factory 标签
 |------|------|------|
 | GitHub(API + git + webhook) | 工单源、交付目标、事件入口 | 出站 API/git;入站仅 webhook(经隧道) |
 | 智谱 GLM API | 全部六类模型调用 | 出站 |
-| cloudflared | webhook 公网 HTTPS 入口 | 常驻隧道进程 |
+| cloudflared | webhook 公网 HTTPS 入口 | systemd 常驻,命名隧道 foreman-local(factory.zjordon.com) |
 | Docker Engine(直装,常驻 Ubuntu 机,socket 激活) | 站点沙箱容器 | 本机 |
 
 ### 3.2 代码依赖变化
@@ -282,7 +290,7 @@ graph LR
 |------|------|------|
 | 云端工厂 A(eve-software-factory-template 项目) | 冻结维护 | factory-playground |
 | 云端工厂 B(eve-factory-examination 项目) | 冻结维护,本地版验收后退役 | examination-system(过渡期) |
-| 自托管本形态 | 实施中(issue #1) | 先测试仓库,按仓库切换协议接管 examination-system |
+| 自托管本形态 | M1-M3 完成,已接管 examination-system(2026-11-01) | examination-system(local-factory-dev 完成测试使命留作夹具仓) |
 
 **仓库切换协议**:任一时刻一个仓库只安装一个工厂 App;切换 = 卸载旧 App 安装 → 安装新 App → 打标签验证,分钟级可逆。
 
