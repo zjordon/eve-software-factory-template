@@ -1,0 +1,80 @@
+{
+  "status": "complete",
+  "llm": {
+    "model": "glm-5.3"
+  },
+  "message": "Review complete: 0 finding(s) across 1 selected item(s).",
+  "summary": {
+    "files_reviewed": 1,
+    "comments": 0,
+    "total_tokens": 11727,
+    "input_tokens": 8598,
+    "output_tokens": 3129,
+    "cache_read_tokens": 4992,
+    "elapsed": "49s"
+  },
+  "tool_calls": {
+    "total": 1,
+    "by_tool": {
+      "file_read": 1
+    },
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [],
+  "groups": [
+    {
+      "label": "scripts/backup-factory-data.sh",
+      "files": [
+        "scripts/backup-factory-data.sh"
+      ]
+    }
+  ],
+  "session_id": "5a0fe09c-f7f1-41dd-8805-10b3ef7668d6",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "5a0fe09c-f7f1-41dd-8805-10b3ef7668d6",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "eec21556473e2f3b36dfc7a5da93b713cc2717fe29ff2ad405efec95ef03b192"
+    },
+    "input": {
+      "mode": "range",
+      "requested_from": "bdffd37",
+      "requested_head": "feat/self-hosting",
+      "resolved_base": "bdffd3792e5b16af612720c21625bc0918390629",
+      "resolved_head": "c5dbcd386f16efa331a7f659aafdf5554f56e929",
+      "exact_range": "bdffd3792e5b16af612720c21625bc0918390629..c5dbcd386f16efa331a7f659aafdf5554f56e929",
+      "source_artifact_sha256": "b516f4fe4ec8872ac95f22bc13be1ad2f30cad5ccc78f4658905f4dd27108a8c"
+    },
+    "execution": {
+      "ocr_version": "v1.13.3",
+      "model": "glm-5.3",
+      "configured_concurrency": 8,
+      "rule_config_sha256": "aec8b9c66d91058e45e329dd68d74d645753d14731850de0fb7c7c854f533602",
+      "runtime_config_sha256": "d82c4b9be9df12c9a549d237bc74133f0fb6c4198a31e53dc5bd1ac7eb20251f"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "5aa37007b558ed80b9b8c51fef88af8e698bde194c4979cfbcb11df2e60e238f",
+          "path": "scripts/backup-factory-data.sh",
+          "fingerprint": "171f4e7156a48f82e2c97eeea6fe7390ac9eb43c8967e40fe49889d162eeac6d"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "5aa37007b558ed80b9b8c51fef88af8e698bde194c4979cfbcb11df2e60e238f",
+          "path": "scripts/backup-factory-data.sh",
+          "fingerprint": "171f4e7156a48f82e2c97eeea6fe7390ac9eb43c8967e40fe49889d162eeac6d"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": []
+    },
+    "elapsed_ms": 48818
+  }
+}
