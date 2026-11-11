@@ -14,6 +14,7 @@
 - 每条 finding 的 [severity/category] path:start-end + 内容 + 建议代码。
 - comment 缺 severity 键（review-issue-194-3 曾出现，schema 违约）时显示 `?`，
   可按该 comment 的 thinking 自述原意手工补键。
+- llm/manifest 为 null（失败或中止轮次）时按空对象处理，不炸摘要器。
 """
 
 from __future__ import annotations
@@ -48,13 +49,19 @@ def find_reviews(issue: str, all_rounds: bool) -> list[Path]:
 	return [Path(p) for p in (paths if all_rounds else paths[-1:])]
 
 
+def _obj(value: object) -> dict:
+	"""缺键与 null 一律当空对象：ocr 失败/中止的轮次会写出 llm/manifest 为 null
+	的 JSON，`.get(k, {})` 只防缺键不防 null，None.get(...) 直接 AttributeError。"""
+	return value if isinstance(value, dict) else {}
+
+
 def summarize(path: Path, full: bool) -> None:
 	m = json.loads(path.read_text(encoding="utf-8"))
 	print("=" * 78)
 	print(path.name)
-	manifest = m.get("manifest", {})
-	inp = manifest.get("input", {})
-	print("  status : %s   llm: %s" % (m.get("status"), m.get("llm", {}).get("model")))
+	manifest = _obj(m.get("manifest"))
+	inp = _obj(manifest.get("input"))
+	print("  status : %s   llm: %s" % (m.get("status"), _obj(m.get("llm")).get("model")))
 	print("  message: %s" % m.get("message"))
 	print("  range  : %s..%s  (%s..%s)"
 		% (_short(inp.get("resolved_base")), _short(inp.get("resolved_head")),
