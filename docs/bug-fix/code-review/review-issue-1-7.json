@@ -1,0 +1,79 @@
+{
+  "status": "complete",
+  "llm": {
+    "model": "glm-5.3"
+  },
+  "message": "Review complete: 0 finding(s) across 1 selected item(s).",
+  "summary": {
+    "files_reviewed": 1,
+    "comments": 0,
+    "total_tokens": 16642,
+    "input_tokens": 12604,
+    "output_tokens": 4038,
+    "cache_read_tokens": 6208,
+    "elapsed": "1m1s"
+  },
+  "tool_calls": {
+    "total": 1,
+    "by_tool": {
+      "file_read": 1
+    },
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [],
+  "groups": [
+    {
+      "label": "agent/lib/blob.ts",
+      "files": ["agent/lib/blob.ts"]
+    }
+  ],
+  "session_id": "ebb283fb-fea7-4612-b465-052d6e137395",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "ebb283fb-fea7-4612-b465-052d6e137395",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "eec21556473e2f3b36dfc7a5da93b713cc2717fe29ff2ad405efec95ef03b192"
+    },
+    "input": {
+      "mode": "range",
+      "requested_from": "46b86fc",
+      "requested_head": "feat/self-hosting",
+      "resolved_base": "46b86fc23f1157d17fd8d8f8c9ab4b8632e87dea",
+      "resolved_head": "61720f70ed8f62ae19db7341d9e22855043bb293",
+      "exact_range": "46b86fc23f1157d17fd8d8f8c9ab4b8632e87dea..61720f70ed8f62ae19db7341d9e22855043bb293",
+      "source_artifact_sha256": "f72aef26b7c709f1af5ea1ac19b3548293502680550528c5cc40b83de655600a"
+    },
+    "execution": {
+      "ocr_version": "v1.13.7",
+      "model": "glm-5.3",
+      "configured_concurrency": 8,
+      "max_tool_request_times": 100,
+      "rule_config_sha256": "8d2f5b7546bb267cfe69043c779b086c9d97be6115201297eab993604b7794f0",
+      "runtime_config_sha256": "841fe9ad288d2dd9efc84c443193c492ef06b26edf31ff5f5a1b01637fef2b0c"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "e15c865547217a46f7d31c8d1f348f9e259bd902a7d1a8b8d1b5649f836bcdf0",
+          "path": "agent/lib/blob.ts",
+          "fingerprint": "2e063d0535c7fe3b69732bd7064834493fd7a16c78c6a9a06078afeb5826f564"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "e15c865547217a46f7d31c8d1f348f9e259bd902a7d1a8b8d1b5649f836bcdf0",
+          "path": "agent/lib/blob.ts",
+          "fingerprint": "2e063d0535c7fe3b69732bd7064834493fd7a16c78c6a9a06078afeb5826f564"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": []
+    },
+    "elapsed_ms": 61072
+  }
+}
