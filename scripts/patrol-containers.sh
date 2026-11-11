@@ -41,7 +41,24 @@ for name in $("$DOCKER" ps -a --filter 'name=eve-sbx-' --format '{{.Names}}'); d
       ;;
     exited|dead|created)
       finished=$("$DOCKER" inspect -f '{{.State.FinishedAt}}' "$name" 2>/dev/null)
-      age=$(( NOW - $(date -d "${finished:-1970-01-01T00:00:00Z}" +%s 2>/dev/null || echo 0) ))
+      # A container that never started (`created`) or died abnormally
+      # (`dead`) reports FinishedAt as the zero timestamp 0001-01-01T00:00:00Z;
+      # date(1) parses that to a huge negative epoch, which would satisfy any
+      # MIN_AGE and prune a seconds-old container. No trustworthy exit time
+      # means no pruning: report and move on. Same for a FinishedAt date(1)
+      # cannot parse at all (the old fallback treated it as 1970 -> instant
+      # prune).
+      case "${finished:-}" in
+        ""|0001-01-01T00:00:00*)
+          echo "no-exit    $name ($state, FinishedAt '$finished') - left alone"
+          continue
+          ;;
+      esac
+      finished_epoch=$(date -d "$finished" +%s 2>/dev/null) || {
+        echo "unparsed   $name ($state, FinishedAt '$finished') - left alone"
+        continue
+      }
+      age=$(( NOW - finished_epoch ))
       if [ "$age" -ge "$MIN_AGE" ]; then
         if [ "$PRUNE" -eq 1 ]; then
           "$DOCKER" rm -f "$name" >/dev/null 2>&1 && echo "pruned    $name (exited $((age / 3600))h ago)" || echo "FAILED    $name"

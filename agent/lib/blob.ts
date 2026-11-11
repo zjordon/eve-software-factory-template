@@ -1,4 +1,11 @@
-import { mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  open,
+  readFile,
+  stat,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
 import { BlobNotFoundError, del, get, head, put } from "@vercel/blob";
 
@@ -262,20 +269,29 @@ export const writeDocument = async (
 ): Promise<{ pathname: string }> => {
   if (LOCAL_BLOB_BACKEND) {
     const path = localDocumentPath(key);
-    if (!options.allowOverwrite) {
-      try {
-        await stat(path);
+    await mkdir(dirname(path), { recursive: true });
+    if (options.allowOverwrite) {
+      await writeFile(path, contents, "utf8");
+      return { pathname: key };
+    }
+    // Write-once must be atomic, not probed: a stat check races a concurrent
+    // writer (an intake-issue run and a red-CI fix can dispatch together), and
+    // the loser would silently replace the winner's document. 'wx' fails with
+    // EEXIST the moment a second create lands, matching the server-side
+    // allowOverwrite: false the Vercel backend enforces.
+    const handle = await open(path, "wx").catch((error: unknown) => {
+      if (enoentCode(error) === "EEXIST") {
         throw new Error(
           `A document already exists at ${key} and may not be overwritten.`
         );
-      } catch (error) {
-        if (enoentCode(error) !== "ENOENT") {
-          throw error;
-        }
       }
+      throw error;
+    });
+    try {
+      await handle.writeFile(contents, "utf8");
+    } finally {
+      await handle.close();
     }
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, contents, "utf8");
     return { pathname: key };
   }
   return put(key, contents, {

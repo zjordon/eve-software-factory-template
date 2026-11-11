@@ -163,19 +163,43 @@ export async function armGitCredentials(
 /**
  * Drops the credential again after a credentialed operation, in a
  * `finally`: Vercel reopens general egress, Docker removes the credential
- * store file and then its git config entry, in that order so a failure
- * while unregistering the helper cannot leave the credential behind.
+ * store file and then its git config entry.
+ *
+ * @remarks
+ * Docker cleanup is best-effort and never throws: this runs in the caller's
+ * `finally`, so a transient exec failure here would otherwise replace the
+ * operation's real result (a push that succeeded would read as failed and
+ * the orchestrator would re-run the station). Both steps are attempted
+ * independently; a step that fails is reported to the logs instead, loudly,
+ * because a leftover credential store is security-relevant (the token lives
+ * one hour, the resumable container longer).
  */
 export async function disarmGitCredentials(
   sandbox: FactorySandboxSession
 ): Promise<void> {
   if (DOCKER_SANDBOX_BACKEND) {
     const docker = sandbox as DockerSandboxSession;
-    await docker.removePath({ force: true, path: DOCKER_CREDENTIAL_STORE });
-    await docker.run({
-      command:
-        "git config --global --unset-all credential.helper >/dev/null 2>&1 || true",
-    });
+    const leftover: string[] = [];
+    try {
+      await docker.removePath({ force: true, path: DOCKER_CREDENTIAL_STORE });
+    } catch {
+      leftover.push("credential store file");
+    }
+    try {
+      await docker.run({
+        command:
+          "git config --global --unset-all credential.helper >/dev/null 2>&1 || true",
+      });
+    } catch {
+      leftover.push("credential.helper config");
+    }
+    if (leftover.length > 0) {
+      console.error(
+        `disarmGitCredentials: best-effort cleanup failed (${leftover.join(
+          ", "
+        )}); a short-lived git credential may remain in the sandbox`
+      );
+    }
     return;
   }
   await (sandbox as VercelSandboxSession).setNetworkPolicy("allow-all");

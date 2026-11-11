@@ -26,9 +26,7 @@
   "groups": [
     {
       "label": "scripts/backup-factory-data.sh",
-      "files": [
-        "scripts/backup-factory-data.sh"
-      ]
+      "files": ["scripts/backup-factory-data.sh"]
     }
   ],
   "session_id": "5a0fe09c-f7f1-41dd-8805-10b3ef7668d6",

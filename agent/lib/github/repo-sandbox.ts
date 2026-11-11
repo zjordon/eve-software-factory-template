@@ -137,7 +137,15 @@ async function gitIdentity(): Promise<{ email: string; name: string }> {
  *   the token out of the sandbox on the Vercel backend and confines it to a
  *   file-backed credential helper on Docker (removed again in the
  *   `finally`), and `FACTORY_SETUP_COMMAND` (e.g. `pnpm install`) still runs
- *   inside the fresh checkout when set.
+ *   inside the fresh checkout when set. Residual exposure, stated plainly:
+ *   on the Docker backend the armed window spans `FACTORY_SETUP_COMMAND`, so
+ *   the credential file is readable and egress is open while the
+ *   operator-configured setup command (and whatever install hooks the target
+ *   repository registers) runs. It cannot be narrowed there: the Docker
+ *   sandbox's network policy is allow-all/deny-all only, and a setup command
+ *   may itself need git access (git dependencies); the one-hour token
+ *   lifetime bounds the blast radius. Pointing the factory at a repository
+ *   is the trust decision that covers this window.
  * - The template snapshot is owned by the builder uid, not the session user;
  *   without the `safe.directory` entries every git command dies on "dubious
  *   ownership".
