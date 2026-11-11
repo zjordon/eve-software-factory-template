@@ -289,8 +289,20 @@ export const writeDocument = async (
     });
     try {
       await handle.writeFile(contents, "utf8");
-    } finally {
       await handle.close();
+    } catch (error) {
+      // A failed create must not leave a partial file claiming the write-once
+      // key: a retry with the same key would read as "already exists" and a
+      // reader would get truncated content. Artifact ids carry a random
+      // suffix, so today's retries pick a fresh key; the cleanup also holds
+      // for any future deterministic-key caller.
+      await handle.close().catch(() => {
+        // Best effort: the original error is the informative one.
+      });
+      await unlink(path).catch(() => {
+        // Best effort: the exec channel or the file may already be gone.
+      });
+      throw error;
     }
     return { pathname: key };
   }
