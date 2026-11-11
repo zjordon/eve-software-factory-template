@@ -15,6 +15,18 @@ KEEP=14
 stamp=$(date +%Y%m%d-%H%M%S)
 mkdir -p "$DEST"
 
+# Pre-flight: a missing source root (renamed/moved after an ops change) must
+# abort loudly. --ignore-failed-read would otherwise let tar skip the whole
+# directory and still exit 0, and the integrity gate below only proves the
+# archive is readable, not complete — a hollow backup would pass every night
+# until retention aged out the last good one.
+for dir in .workflow-data blob-data; do
+  if [ ! -d "$REPO/.eve/$dir" ]; then
+    echo "backup abort: missing source directory $REPO/.eve/$dir" >&2
+    exit 2
+  fi
+done
+
 # --ignore-failed-read: a file vanishing mid-read (turn rotated between tar's
 # walk and read) must not void the whole archive. Separately, GNU tar exits 1
 # on "file changed as we read it" (a live turn appending events): warnings

@@ -42,12 +42,16 @@ Configuration (see `.env.example`):
 
 | Variable | Required | Default | What it does |
 | --- | --- | --- | --- |
-| `FACTORY_REPO` | Yes | — | An existing GitHub repository in `owner/repo` format; the selected GitHub App must have access to it (a station's first session fails otherwise) |
+| `FACTORY_REPO` | Yes | — | An existing GitHub repository in `owner/repo` format; the GitHub App must have access to it (a station's first session fails otherwise) |
+| `GITHUB_APP_ID` / `GITHUB_INSTALLATION_ID` / `GITHUB_APP_PRIVATE_KEY` (or `_PATH`) / `GITHUB_APP_SLUG` | Yes | — | The self-held GitHub App: JWT signed from the key, 1h installation tokens minted per call; the slug resolves the `@mention` name |
+| `GITHUB_WEBHOOK_SECRET` | Yes | — | Verifies inbound webhook signatures; must match the App's webhook settings |
+| `ZHIPU_API_KEY` | Yes | — | Model provider key (Zhipu GLM via the Anthropic-compatible endpoint) |
+| `ROUTE_AUTH_BASIC_USERNAME` / `ROUTE_AUTH_BASIC_PASSWORD` | Yes | — | Basic credentials for the eve HTTP API (`/eve/v1/*`); production fails closed without them |
 | `FACTORY_SETUP_COMMAND` | No | — | Runs once per session inside the station sandbox checkout (e.g. `pnpm install`), so the station starts with dependencies already installed |
 | `FACTORY_LABEL` | No | `factory` | The issue label that hands an issue to the factory |
 | `FACTORY_BRANCH_PREFIX` | No | `factory/` | Branch prefix marking the factory's own PRs, which are the only branches automated CI fixes touch |
-| `FACTORY_BOT_NAME` | No | the GitHub App's slug | The `@mention` name, resolved from the connector automatically when unset |
-| `GITHUB_CONNECTOR` / `LINEAR_CONNECTOR` | Yes | — | Set automatically from Vercel Connect connector UIDs |
+| `FACTORY_BOT_NAME` | No | `GITHUB_APP_SLUG` | The `@mention` name override |
+| `FACTORY_SANDBOX_BACKEND` / `FACTORY_BLOB_BACKEND` / `FACTORY_DATA_DIR` | No | `vercel` / `vercel` / `.eve/blob-data` | Self-hosted form: Docker station sandboxes and the filesystem Blob store — see `docs/自托管实施方案.md` |
 
 ## Local development
 
