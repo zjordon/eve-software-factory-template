@@ -27,10 +27,7 @@
   "groups": [
     {
       "label": "small change set",
-      "files": [
-        "agent/channels/dashboard.ts",
-        "agent/instrumentation/runs.ts"
-      ]
+      "files": ["agent/channels/dashboard.ts", "agent/instrumentation/runs.ts"]
     }
   ],
   "session_id": "a12d8a2d-da24-4452-b060-7c00d47bbf09",

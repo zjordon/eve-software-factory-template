@@ -87,10 +87,23 @@ export default defineChannel({
       try {
         // -1 tails the stream from the latest event: the panel follows a run
         // in flight rather than replaying its history.
-        const stream = await attachSession(params.id).getEventStream({
+        const events = await attachSession(params.id).getEventStream({
           startIndex: -1,
         });
-        return new Response(stream, {
+        // getEventStream yields parsed event objects, not wire bytes; an HTTP
+        // body must be bytes, so encode each event as one NDJSON line here —
+        // the same framing the eve channel's own stream route uses. Handing
+        // the object stream to Response directly aborts the connection with
+        // an empty reply (verified live; the doc example is misleading).
+        const encoder = new TextEncoder();
+        const body = events.pipeThrough(
+          new TransformStream({
+            transform: (event, controller) => {
+              controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+            },
+          })
+        );
+        return new Response(body, {
           headers: {
             "cache-control": "no-store",
             "content-type": "application/x-ndjson; charset=utf-8",
