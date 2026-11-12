@@ -379,17 +379,37 @@ function liveLine(text) {
   node.scrollTop = node.scrollHeight;
 }
 
-// 活动指示：流式增量块不进日志（刷屏），但它们是"正在生成"的最强信号——
-// 任何事件到达时就地刷新这一行（限频 1 秒），静音尾巴不再读作死流。
-let activityAt = 0;
+// 活动指示：流式增量块不进日志（刷屏），但它们是"正在生成"的最强信号。
+// 二态渲染：事件在流（● 活动中）；静默超 30 秒（○ 静默中 + 已静默时长）——
+// 站点跑长工具（sandbox clone / uv sync）期间事件流真静默，只有心跳在走，
+// 静默计时由本地时钟驱动，操作者能分辨"在干活"与"死了"。
+let lastEventAt = 0;
+let activityLabel = "";
 function touchActivity(label) {
-  const now = Date.now();
-  if (now - activityAt < 1000) {
+  lastEventAt = Date.now();
+  activityLabel = label;
+  renderActivity();
+}
+function renderActivity() {
+  const node = $("activity");
+  if (selected === null || lastEventAt === 0) {
+    node.textContent = "";
     return;
   }
-  activityAt = now;
-  $("activity").textContent = "● " + label + " 流式活动中 · 最后活动 " + clock(new Date().toISOString());
+  const silentMs = Date.now() - lastEventAt;
+  if (silentMs > 30000) {
+    const mins = Math.floor(silentMs / 60000);
+    const secs = Math.floor((silentMs % 60000) / 1000);
+    node.textContent =
+      "○ " + activityLabel + " 静默中 · 已 " +
+      (mins > 0 ? mins + "m" + secs + "s" : secs + "s") +
+      "（长工具或 sandbox 初始化）";
+  } else {
+    node.textContent =
+      "● " + activityLabel + " 流式活动中 · 最后活动 " + clock(new Date(lastEventAt).toISOString());
+  }
 }
+setInterval(renderActivity, 1000);
 
 function describeStreamEvent(event) {
   switch (event.type) {
@@ -561,6 +581,8 @@ function route() {
   if (pollTimer !== null) { clearInterval(pollTimer); pollTimer = null; }
   $("live").textContent = "";
   $("activity").textContent = "";
+  lastEventAt = 0;
+  activityLabel = "";
   if (id === "") {
     selected = null;
     $("detail-view").hidden = true;
