@@ -1,5 +1,6 @@
 import { defineChannel, GET } from "eve/channels";
 import { routeAuth } from "eve/channels/auth";
+import { FACTORY_REPO } from "../lib/constants.js";
 import {
   dailyTotals,
   getRun,
@@ -236,6 +237,7 @@ const runPanelPage = (): string => `<!doctype html>
 <script>
 "use strict";
 const $ = (id) => document.getElementById(id);
+const repoUrl = "https://github.com/${FACTORY_REPO}";
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const fmtDur = (ms) => {
@@ -368,7 +370,8 @@ function renderDetail(run) {
     + "</div>"
     + "<hr><div><b>站点时间线</b></div>" + stages
     + '<div style="margin-top:0.5rem"><b>审批卡</b></div>' + inputs
-    + (failures === "" ? "" : '<div style="margin-top:0.5rem"><b>失败轮</b></div>' + failures);
+    + (failures === "" ? "" : '<div style="margin-top:0.5rem"><b>失败轮</b></div>' + failures
+      + (r.thread === null ? "" : '<div class="muted">错误详情以错误评论贴在 <a href="' + repoUrl + "/" + (r.thread.kind === "issue" ? "issues" : "pull") + "/" + r.thread.number + '" target="_blank" rel="noopener">该线程</a>；记录面只存错误代码（对话内容不落盘）。</div>'));
 }
 
 function liveLine(text) {

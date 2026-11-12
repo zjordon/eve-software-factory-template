@@ -260,6 +260,21 @@ export default defineInstrumentation({
         },
         { dedupeKey: dedupeKey(event.type, event.idempotencyKey) }
       ),
+    // The model call's error detail is content (not recorded); a self-minted
+    // structural code still types the turn failure that follows it, instead
+    // of an unhelpful "unknown" (the GLM endpoint throws AI SDK protocol
+    // errors like AI_MissingToolResultsError every so often).
+    "model.call.failed": (event) =>
+      upsertRun(
+        rootOf(event.scope),
+        (record) => {
+          record.actionErrors = [
+            ...record.actionErrors,
+            { at: nowIso(), errorCode: "MODEL_CALL_FAILED" },
+          ].slice(-ACTION_ERRORS_CAP);
+        },
+        { dedupeKey: dedupeKey(event.type, event.idempotencyKey) }
+      ),
     "session.completed": (event) =>
       upsertRun(
         event.sessionId,
