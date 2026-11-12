@@ -85,10 +85,17 @@ export default defineChannel({
         return denied;
       }
       try {
-        // -1 tails the stream from the latest event: the panel follows a run
-        // in flight rather than replaying its history.
+        // ?tail=N replays the last N events before following live (negative
+        // startIndex counts back from the newest). A tail of exactly 1 often
+        // lands on a streaming chunk the panel mutes, which reads as a dead
+        // feed; a short replay gives the operator the recent boundaries.
+        const tailParam = Number(new URL(request.url).searchParams.get("tail"));
+        const tail =
+          Number.isSafeInteger(tailParam) && tailParam > 0 && tailParam <= 50
+            ? -tailParam
+            : -12;
         const events = await attachSession(params.id).getEventStream({
-          startIndex: -1,
+          startIndex: tail,
         });
         // getEventStream yields parsed event objects, not wire bytes; an HTTP
         // body must be bytes, so encode each event as one NDJSON line here —
@@ -224,7 +231,7 @@ const runPanelPage = (): string => `<!doctype html>
 <section id="detail-view" hidden>
   <p><button id="back">← 返回列表</button></p>
   <div class="card" id="detail"></div>
-  <div class="card"><div class="muted">实时事件（进入站点时跟随站点会话流；断流后自动转为 10 秒轮询）</div><pre id="live"></pre></div>
+  <div class="card"><div class="muted">实时事件（进入站点时跟随站点会话流；断流后自动转为 10 秒轮询）</div><div class="muted" id="activity"></div><pre id="live"></pre></div>
 </section>
 <script>
 "use strict";
@@ -372,6 +379,18 @@ function liveLine(text) {
   node.scrollTop = node.scrollHeight;
 }
 
+// 活动指示：流式增量块不进日志（刷屏），但它们是"正在生成"的最强信号——
+// 任何事件到达时就地刷新这一行（限频 1 秒），静音尾巴不再读作死流。
+let activityAt = 0;
+function touchActivity(label) {
+  const now = Date.now();
+  if (now - activityAt < 1000) {
+    return;
+  }
+  activityAt = now;
+  $("activity").textContent = "● " + label + " 流式活动中 · 最后活动 " + clock(new Date().toISOString());
+}
+
 function describeStreamEvent(event) {
   switch (event.type) {
     case "turn.started": return "轮开始";
@@ -434,12 +453,13 @@ async function followChild(childSessionId, tag) {
   let failures = 0;
   for (;;) {
     try {
-      const response = await fetch("/run/" + encodeURIComponent(childSessionId) + "/stream", { signal: childAbort.signal });
+      const response = await fetch("/run/" + encodeURIComponent(childSessionId) + "/stream?tail=12", { signal: childAbort.signal });
       if (!response.ok || response.body === null) throw new Error("HTTP " + response.status);
       failures = 0;
       await pump(response, (event) => {
         const text = describeStreamEvent(event);
         if (text !== null) liveLine(clock(new Date().toISOString()) + " [" + tag + "] " + text);
+        touchActivity(tag);
       });
       // 正常结束（站点完成，会话终态）不重连，避免对终态会话空转。
       return;
@@ -476,7 +496,7 @@ async function followLive(id) {
     let failures = 0;
     while (selected === id) {
       try {
-        const response = await fetch("/run/" + encodeURIComponent(id) + "/stream", {
+        const response = await fetch("/run/" + encodeURIComponent(id) + "/stream?tail=12", {
           accept: "application/x-ndjson",
           signal: liveAbort.signal,
         });
@@ -494,6 +514,7 @@ async function followLive(id) {
           }
           const text = describeStreamEvent(event);
           if (text !== null) liveLine(clock(new Date().toISOString()) + " " + text);
+          touchActivity("会话");
         });
         liveLine("—— 实时流结束 ——");
       } catch (streamError) {
@@ -539,6 +560,7 @@ function route() {
   closeChild();
   if (pollTimer !== null) { clearInterval(pollTimer); pollTimer = null; }
   $("live").textContent = "";
+  $("activity").textContent = "";
   if (id === "") {
     selected = null;
     $("detail-view").hidden = true;
