@@ -318,7 +318,7 @@ function renderList(data) {
   if (zombies.length > 0) {
     banner.hidden = false;
     banner.innerHTML = "<b>" + zombies.length + " 个僵尸运行</b>：" + zombies.map((run) =>
-      esc((run.record.thread === null ? run.record.sessionId.slice(0, 8)
+      esc((run.record.thread === null ? "…" + run.record.sessionId.slice(-8)
         : "#" + run.record.thread.number) + " " + run.zombie.type + "（" + run.zombie.detail + "）")).join("；")
       + '。<span class="muted">处置口径见运维手册「可观测性」一节（reset / 迁移）。</span>';
   } else {
@@ -432,6 +432,10 @@ function describeStreamEvent(event) {
       return "动作结束：" + name + "（" + (event.data?.status ?? "?") + "）";
     }
     case "message.completed": return "回复完成";
+    case "message.received": return "消息到达";
+    case "step.started": return "模型步开始";
+    case "step.completed": return "模型步完成";
+    case "step.failed": return "模型步失败";
     case "input.requested": return "审批卡出现";
     // 流式增量块（每秒多条）不进实时区，只留生命周期边界。
     case "message.appended":
