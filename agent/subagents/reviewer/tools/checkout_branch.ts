@@ -1,9 +1,9 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { githubCredentials } from "../../../lib/github/credentials.js";
+import { mintInstallationToken } from "../../../lib/github/credentials.js";
 import {
-  brokerPolicy,
-  mintInstallationToken,
+  armGitCredentials,
+  disarmGitCredentials,
   REMOTE_URL,
   REPO_DIR,
   validateBranch,
@@ -15,10 +15,12 @@ import { environment } from "../sandbox.js";
  * sandbox.
  *
  * @remarks
- * The fetch targets the factory repository's URL literally with a credential
- * brokered at the sandbox firewall (never entering the sandbox), mirroring
- * the implementer's tools. `validateBranch` bounds what can be interpolated
- * into the git command line.
+ * The fetch targets the factory repository's URL literally with the
+ * credential armed for the fetch and dropped again in the `finally`
+ * (`armGitCredentials`/`disarmGitCredentials`: firewall injection on Vercel,
+ * a removed-again credential helper on Docker), mirroring the implementer's
+ * tools. `validateBranch` bounds what can be interpolated into the git
+ * command line.
  */
 export default defineTool({
   description: `Fetch the branch under review from the factory repository and check it out in ${REPO_DIR}. Run this first, then read the real diff against the base branch.`,
@@ -28,8 +30,8 @@ export default defineTool({
       return { error: refusal, success: false as const };
     }
     const sandbox = await ctx.getSandbox(environment);
-    const token = await mintInstallationToken(githubCredentials);
-    await sandbox.setNetworkPolicy(brokerPolicy(token));
+    const token = await mintInstallationToken();
+    await armGitCredentials(sandbox, token);
     try {
       const fetch = await sandbox.run({
         command: `git -C ${REPO_DIR} fetch ${REMOTE_URL} '${input.branch}' && git -C ${REPO_DIR} checkout -B '${input.branch}' FETCH_HEAD`,
@@ -51,7 +53,7 @@ export default defineTool({
         success: true as const,
       };
     } finally {
-      await sandbox.setNetworkPolicy("allow-all");
+      await disarmGitCredentials(sandbox);
     }
   },
   inputSchema: z.object({

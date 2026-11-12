@@ -1,5 +1,3 @@
-import { connect } from "@vercel/connect/eve";
-
 /**
  * Reads a required environment variable, throwing if it is unset so
  * misconfiguration fails fast instead of surfacing mid-request.
@@ -82,30 +80,29 @@ export const FACTORY_BRANCH_PREFIX =
   process.env.FACTORY_BRANCH_PREFIX ?? "factory/";
 
 /**
- * Shared Linear authorization via Vercel Connect.
- *
- * Single source of truth for the Linear connector so every consumer — the
- * Linear MCP connection and any tool calling the GraphQL API directly —
- * shares one Linear installation and one set of scopes.
+ * Which sandbox backend the factory's sandboxes open.
  *
  * @remarks
- * - App-scoped (`principalType: "app"`), so no per-user consent flow is
- *   required; tokens are minted for the installation itself.
- * - Tokens are requested per call via `ctx.getToken(linearAuth)`, cached per
- *   step by eve, and never exposed to the model.
- * - The connector UID comes from the `LINEAR_CONNECTOR` environment variable
- *   (e.g. `linear/foreman-agent`); the module throws at load time if it
- *   is not set.
- *
- * @example
- * ```ts
- * const { token } = await ctx.getToken(linearAuth);
- * ```
+ * `"vercel"` (the default) opens hosted Vercel Sandboxes and brokers the
+ * git credential at the sandbox firewall; `"docker"` opens local Docker
+ * containers and passes the credential through an in-container git
+ * credential helper instead. The switch is read by every factory sandbox
+ * environment (root and stations) plus the git credential arm/disarm pair
+ * in `agent/lib/github/git-remote.ts`, so both halves of a session always
+ * agree on how credentials travel.
  */
-export const linearAuth = connect({
-  connector: requireEnv("LINEAR_CONNECTOR", "linear/foreman-agent"),
-  principalType: "app",
-  tokenParams: {
-    scopes: ["read", "write", "issues:create", "comments:create"],
-  },
-});
+const FACTORY_SANDBOX_BACKEND = process.env.FACTORY_SANDBOX_BACKEND ?? "vercel";
+
+if (
+  FACTORY_SANDBOX_BACKEND !== "vercel" &&
+  FACTORY_SANDBOX_BACKEND !== "docker"
+) {
+  throw new Error(
+    `FACTORY_SANDBOX_BACKEND must be "vercel" or "docker" (e.g. 'docker'), got '${FACTORY_SANDBOX_BACKEND}'.`
+  );
+}
+
+/**
+ * Whether the factory runs on the local Docker sandbox backend.
+ */
+export const DOCKER_SANDBOX_BACKEND = FACTORY_SANDBOX_BACKEND === "docker";

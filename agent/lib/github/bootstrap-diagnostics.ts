@@ -27,9 +27,11 @@ const CREDENTIAL_PATTERNS = [
  * marker.
  *
  * @remarks
- * Defense in depth: the installation token is injected at the sandbox
- * firewall and never enters the sandbox, so command output should already be
- * clean, but nothing quoted into an error may depend on that.
+ * Defense in depth: on the Vercel backend the installation token is injected
+ * at the sandbox firewall and never enters the sandbox; on the Docker
+ * backend it exists briefly in a file-backed credential helper. Command
+ * output should already be clean either way, but nothing quoted into an
+ * error may depend on that.
  */
 export function sanitizeCommandOutput(text: string): string {
   let sanitized = text;
@@ -40,12 +42,12 @@ export function sanitizeCommandOutput(text: string): string {
 }
 
 /**
- * Message for the case where the app is definitively the problem: Connect
- * refused to mint an installation token, or GitHub refused the minted token
- * outright.
+ * Message for the case where the app is definitively the problem: the
+ * installation token could not be minted, or GitHub refused the minted
+ * token outright.
  */
 export function appAccessMessage(repo: string): string {
-  return `Cannot access ${repo}. Install the selected GitHub connector's app with access to this repository, then try again.`;
+  return `Cannot access ${repo}. Install the factory's GitHub App with access to this repository, then try again.`;
 }
 
 /**
@@ -57,7 +59,7 @@ export function appAccessMessage(repo: string): string {
  * to cover both fixes.
  */
 export function missingRepoMessage(repo: string): string {
-  return `Cannot clone ${repo}: GitHub reports the repository as not found. FACTORY_REPO must reference an existing repository in owner/repo format, and for a private repository the selected GitHub connector's app must be installed with access to it (GitHub reports both cases as not found). Fix FACTORY_REPO or the app installation, then redeploy.`;
+  return `Cannot clone ${repo}: GitHub reports the repository as not found. FACTORY_REPO must reference an existing repository in owner/repo format, and for a private repository the factory's GitHub App must be installed with access to it (GitHub reports both cases as not found). Fix FACTORY_REPO or the app installation, then try again.`;
 }
 
 const NOT_FOUND_EVIDENCE =

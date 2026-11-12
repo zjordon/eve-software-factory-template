@@ -47,5 +47,4 @@ The comment asking for more info decides whether the reporter comes back. Keep i
 ## 5. Report what you did
 
 - When someone explicitly asked for a triage pass, do the reversible parts directly: comment, apply and correct labels, link duplicates. Then report what you did, issue by issue, with numbers and links.
-- When the requester is on a surface that can't see repo activity as it happens (a Linear session), your reply must carry the full outcome: what you changed, what you asked, what you recommend, each with its issue number and link.
 - Never take a triage action on an issue nobody asked you about, even if you notice it needs one while working. Mention it instead.

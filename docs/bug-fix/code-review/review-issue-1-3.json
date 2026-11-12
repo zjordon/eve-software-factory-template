@@ -1,0 +1,90 @@
+{
+  "status": "complete",
+  "llm": {
+    "model": "glm-5.3"
+  },
+  "message": "Review complete: 0 finding(s) across 2 selected item(s).",
+  "summary": {
+    "files_reviewed": 2,
+    "comments": 0,
+    "total_tokens": 73632,
+    "input_tokens": 65928,
+    "output_tokens": 7704,
+    "cache_read_tokens": 30144,
+    "elapsed": "2m16s"
+  },
+  "tool_calls": {
+    "total": 12,
+    "by_tool": {
+      "code_search": 7,
+      "file_find": 2,
+      "file_read": 3
+    },
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [],
+  "groups": [
+    {
+      "label": "small change set",
+      "files": ["agent/lib/github/repo-sandbox.ts", "agent/sandbox/Dockerfile"]
+    }
+  ],
+  "session_id": "3ddf2ffc-9a98-43e9-8c87-250ca1401056",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "3ddf2ffc-9a98-43e9-8c87-250ca1401056",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "eec21556473e2f3b36dfc7a5da93b713cc2717fe29ff2ad405efec95ef03b192"
+    },
+    "input": {
+      "mode": "range",
+      "requested_from": "4abff37",
+      "requested_head": "feat/self-hosting",
+      "resolved_base": "4abff37fe901cf82e6022518d502d8c6b95cabd7",
+      "resolved_head": "c6c94d632b42be517d0b8feb4f26abf00d20e6ab",
+      "exact_range": "4abff37fe901cf82e6022518d502d8c6b95cabd7..c6c94d632b42be517d0b8feb4f26abf00d20e6ab",
+      "source_artifact_sha256": "ee26ce3a22e586a19db4ad4228b6e91ab336e29ba932232b4679966d2f53043a"
+    },
+    "execution": {
+      "ocr_version": "v1.13.3",
+      "model": "glm-5.3",
+      "configured_concurrency": 8,
+      "rule_config_sha256": "aec8b9c66d91058e45e329dd68d74d645753d14731850de0fb7c7c854f533602",
+      "runtime_config_sha256": "d82c4b9be9df12c9a549d237bc74133f0fb6c4198a31e53dc5bd1ac7eb20251f"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "839859e6d22b75e558b403d987e30b3e9f18e6d8712a6fd6d2e07dda9af96904",
+          "path": "agent/lib/github/repo-sandbox.ts",
+          "fingerprint": "b7491093e9e8a3a9692ad24ed632a00863fb24216e6e9d3fa187bf56a33030c9"
+        },
+        {
+          "item_id": "a79422dee0a02603340e18995947f8346a3be5985cc2087f64705db9095acb01",
+          "path": "agent/sandbox/Dockerfile",
+          "fingerprint": "cde5ebd4e5b06fde3339218a0e01cfa268f4ade739e2c8135250d5a63b00aece"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "839859e6d22b75e558b403d987e30b3e9f18e6d8712a6fd6d2e07dda9af96904",
+          "path": "agent/lib/github/repo-sandbox.ts",
+          "fingerprint": "b7491093e9e8a3a9692ad24ed632a00863fb24216e6e9d3fa187bf56a33030c9"
+        },
+        {
+          "item_id": "a79422dee0a02603340e18995947f8346a3be5985cc2087f64705db9095acb01",
+          "path": "agent/sandbox/Dockerfile",
+          "fingerprint": "cde5ebd4e5b06fde3339218a0e01cfa268f4ade739e2c8135250d5a63b00aece"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": []
+    },
+    "elapsed_ms": 136151
+  }
+}

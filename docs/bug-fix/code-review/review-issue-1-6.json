@@ -1,0 +1,184 @@
+{
+  "status": "complete",
+  "llm": {
+    "model": "glm-5.3"
+  },
+  "message": "Review complete: 1 finding(s) across 8 selected item(s).",
+  "summary": {
+    "files_reviewed": 8,
+    "comments": 1,
+    "total_tokens": 325089,
+    "input_tokens": 295578,
+    "output_tokens": 29511,
+    "cache_read_tokens": 203456,
+    "elapsed": "2m54s"
+  },
+  "tool_calls": {
+    "total": 31,
+    "by_tool": {
+      "code_comment": 1,
+      "code_search": 12,
+      "file_find": 5,
+      "file_read": 13
+    },
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [
+    {
+      "path": "agent/lib/blob.ts",
+      "content": "open(path, \"wx\") 成功后若 handle.writeFile 中途失败（ENOSPC/EIO/进程中断），半截文件会残留在 path 上。由于 write-once 契约正是靠 EEXIST 拦截同 key 重写，此后对同一 key 的所有 save_artifact 重试都会命中 EEXIST 而报 \"A document already exists\"——artifact id 由 (kind, title) 派生，重试必然同 key，只能人工清理 FACTORY_DATA_DIR 才能解锁；更糟的是 readDocument 会把这份截断的 Markdown 当作 found: true 的有效文档返回，下一 station 会静默消费损坏的交接 artifact。具体失效场景：磁盘写满时保存 artifact → writeFile 抛 ENOSPC → 工具返回 saved: false，模型重试永远失败，且下游读到截断内容。建议在 writeFile 失败路径上 best-effort unlink 残留文件后再重抛原始错误，使\"创建失败\"与\"已存在\"在重试时可区分。",
+      "suggestion_code": "    try {\n      await handle.writeFile(contents, \"utf8\");\n    } catch (error) {\n      await handle.close().catch(() =\u003e {});\n      // A failed create must not permanently claim the write-once key:\n      // the leftover partial file would turn every retry into EEXIST and\n      // feed readers truncated content.\n      await unlink(path).catch(() =\u003e {});\n      throw error;\n    }\n    await handle.close();",
+      "existing_code": "    try {\n      await handle.writeFile(contents, \"utf8\");\n    } finally {\n      await handle.close();\n    }",
+      "start_line": 290,
+      "end_line": 294,
+      "thinking": "Confirmed: `save_artifact` is write-once and any error is surfaced as `saved: false` with the message — the model may retry, but a partial file at the key would make every retry fail with \"A document already exists\", and the next station's read would return truncated content as a valid artifact. That's the concrete failure scenario for the missing cleanup on write failure in the new 'wx' path.\n\nSeverity: medium. Category: bug. Suggestion: catch write failure → best-effort unlink → rethrow.\n\nNow finalize:\n\n- agent/agent.ts: no issue.\n- agent/lib/blob.ts: one finding (partial file left behind on write failure permanently locks the write-once key + serves truncated content).\n- agent/lib/github/git-remote.ts: no correctness issue (best-effort semantics implemented correctly; both steps attempted independently; loud log on leftover).\n- agent/lib/github/repo-sandbox.ts: comment-only, accurate vs. implementation (setup runs inside arm/disarm window per factoryInit). No issue.\n\nReport the single blob.ts finding and finish.",
+      "category": "bug",
+      "severity": "medium"
+    }
+  ],
+  "groups": [
+    {
+      "label": "Agent Git/GitHub blob and repo handling",
+      "files": [
+        "agent/agent.ts",
+        "agent/lib/blob.ts",
+        "agent/lib/github/git-remote.ts",
+        "agent/lib/github/repo-sandbox.ts"
+      ]
+    },
+    {
+      "label": "Biome linter configuration",
+      "files": ["biome.jsonc"]
+    },
+    {
+      "label": "Ops shell scripts (backup \u0026 container patrol)",
+      "files": [
+        "scripts/backup-factory-data.sh",
+        "scripts/patrol-containers.sh"
+      ]
+    },
+    {
+      "label": "Review summary script",
+      "files": ["scripts/review_summary.py"]
+    }
+  ],
+  "session_id": "6f45cc9b-4eb9-4b5e-b2cc-dc4224e321ed",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "6f45cc9b-4eb9-4b5e-b2cc-dc4224e321ed",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "eec21556473e2f3b36dfc7a5da93b713cc2717fe29ff2ad405efec95ef03b192"
+    },
+    "input": {
+      "mode": "range",
+      "requested_from": "c5dbcd3",
+      "requested_head": "feat/self-hosting",
+      "resolved_base": "c5dbcd386f16efa331a7f659aafdf5554f56e929",
+      "resolved_head": "46b86fc23f1157d17fd8d8f8c9ab4b8632e87dea",
+      "exact_range": "c5dbcd386f16efa331a7f659aafdf5554f56e929..46b86fc23f1157d17fd8d8f8c9ab4b8632e87dea",
+      "source_artifact_sha256": "3ea115b1f835672f611aa2a5b518a99f23861c6a4f82a51061492b3fac7e20a6"
+    },
+    "execution": {
+      "ocr_version": "v1.13.7",
+      "model": "glm-5.3",
+      "configured_concurrency": 8,
+      "max_tool_request_times": 100,
+      "rule_config_sha256": "8d2f5b7546bb267cfe69043c779b086c9d97be6115201297eab993604b7794f0",
+      "runtime_config_sha256": "841fe9ad288d2dd9efc84c443193c492ef06b26edf31ff5f5a1b01637fef2b0c"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "25069acff6d009c106006084718c68672aadaa88fde0d0fc2b979f822eec02af",
+          "path": "biome.jsonc",
+          "fingerprint": "e8751bcf6e1944dff7791d1801b80980be33125297243bd4b81c23ae4cc5c245"
+        },
+        {
+          "item_id": "4f4ea9f716c877623b129284aa0cb32a1a97cc4f032aab6f856a99691c378e37",
+          "path": "agent/agent.ts",
+          "fingerprint": "a842fd498bac456b811e327715d389e242f10175a7b589d59bfe6ed7ffa3f646"
+        },
+        {
+          "item_id": "5aa37007b558ed80b9b8c51fef88af8e698bde194c4979cfbcb11df2e60e238f",
+          "path": "scripts/backup-factory-data.sh",
+          "fingerprint": "ac8754b418882d6ba635a97f42afeea7850083a92467d6adb878fb64dadf118d"
+        },
+        {
+          "item_id": "6915bda38bb25d0e83366448bead34a39bf1ae79417fd8560f251f7f36c8bc52",
+          "path": "scripts/patrol-containers.sh",
+          "fingerprint": "37aea5a94f697dd2e5c99533a08c3fdb89152f3248e25995cd530ea5b63ca976"
+        },
+        {
+          "item_id": "839859e6d22b75e558b403d987e30b3e9f18e6d8712a6fd6d2e07dda9af96904",
+          "path": "agent/lib/github/repo-sandbox.ts",
+          "fingerprint": "1e65ed5edf747c28703c08762bd008344bf445a9047a8d8b98fef4f20a79880a"
+        },
+        {
+          "item_id": "b5745ea70d412428a7716873c19ca90c57807b4e21230d020b77954e7ddfc997",
+          "path": "agent/lib/github/git-remote.ts",
+          "fingerprint": "3e3e728611f10089c319b057f6703e8a2d5cd974e9159de7b78acff165a23c53"
+        },
+        {
+          "item_id": "e15c865547217a46f7d31c8d1f348f9e259bd902a7d1a8b8d1b5649f836bcdf0",
+          "path": "agent/lib/blob.ts",
+          "fingerprint": "eacb06055a426895cfbab81e9375c811bb7e5494cc96ee07e0192768bde10583"
+        },
+        {
+          "item_id": "fb95e61217db97684aa3e534f6156a29e7de8c0baa4277cc262991149e85f4c7",
+          "path": "scripts/review_summary.py",
+          "fingerprint": "4d8cc89fe1838206edf493bf86265374195e2659e3a0e0ee90121568b2faaedb"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "25069acff6d009c106006084718c68672aadaa88fde0d0fc2b979f822eec02af",
+          "path": "biome.jsonc",
+          "fingerprint": "e8751bcf6e1944dff7791d1801b80980be33125297243bd4b81c23ae4cc5c245"
+        },
+        {
+          "item_id": "4f4ea9f716c877623b129284aa0cb32a1a97cc4f032aab6f856a99691c378e37",
+          "path": "agent/agent.ts",
+          "fingerprint": "a842fd498bac456b811e327715d389e242f10175a7b589d59bfe6ed7ffa3f646"
+        },
+        {
+          "item_id": "5aa37007b558ed80b9b8c51fef88af8e698bde194c4979cfbcb11df2e60e238f",
+          "path": "scripts/backup-factory-data.sh",
+          "fingerprint": "ac8754b418882d6ba635a97f42afeea7850083a92467d6adb878fb64dadf118d"
+        },
+        {
+          "item_id": "6915bda38bb25d0e83366448bead34a39bf1ae79417fd8560f251f7f36c8bc52",
+          "path": "scripts/patrol-containers.sh",
+          "fingerprint": "37aea5a94f697dd2e5c99533a08c3fdb89152f3248e25995cd530ea5b63ca976"
+        },
+        {
+          "item_id": "839859e6d22b75e558b403d987e30b3e9f18e6d8712a6fd6d2e07dda9af96904",
+          "path": "agent/lib/github/repo-sandbox.ts",
+          "fingerprint": "1e65ed5edf747c28703c08762bd008344bf445a9047a8d8b98fef4f20a79880a"
+        },
+        {
+          "item_id": "b5745ea70d412428a7716873c19ca90c57807b4e21230d020b77954e7ddfc997",
+          "path": "agent/lib/github/git-remote.ts",
+          "fingerprint": "3e3e728611f10089c319b057f6703e8a2d5cd974e9159de7b78acff165a23c53"
+        },
+        {
+          "item_id": "e15c865547217a46f7d31c8d1f348f9e259bd902a7d1a8b8d1b5649f836bcdf0",
+          "path": "agent/lib/blob.ts",
+          "fingerprint": "eacb06055a426895cfbab81e9375c811bb7e5494cc96ee07e0192768bde10583"
+        },
+        {
+          "item_id": "fb95e61217db97684aa3e534f6156a29e7de8c0baa4277cc262991149e85f4c7",
+          "path": "scripts/review_summary.py",
+          "fingerprint": "4d8cc89fe1838206edf493bf86265374195e2659e3a0e0ee90121568b2faaedb"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": []
+    },
+    "elapsed_ms": 174175
+  }
+}

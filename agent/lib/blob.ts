@@ -1,4 +1,66 @@
+import {
+  mkdir,
+  open,
+  readFile,
+  stat,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
+import { dirname, resolve, sep } from "node:path";
 import { BlobNotFoundError, del, get, head, put } from "@vercel/blob";
+
+/**
+ * Which backend the document helpers below use: the hosted Vercel Blob store
+ * (`"vercel"`, the default, authorized by the ambient Vercel OIDC
+ * credentials) or a local filesystem directory (`"local"`, the self-hosted
+ * form, rooted at `FACTORY_DATA_DIR`).
+ *
+ * @remarks
+ * The reserved-namespace registry and every guard above the helpers are
+ * backend-independent; only the three document helpers branch, so both forms
+ * enforce the same layout.
+ */
+const FACTORY_BLOB_BACKEND = process.env.FACTORY_BLOB_BACKEND ?? "vercel";
+
+if (FACTORY_BLOB_BACKEND !== "vercel" && FACTORY_BLOB_BACKEND !== "local") {
+  throw new Error(
+    `FACTORY_BLOB_BACKEND must be "vercel" or "local" (e.g. 'local'), got '${FACTORY_BLOB_BACKEND}'.`
+  );
+}
+
+const LOCAL_BLOB_BACKEND = FACTORY_BLOB_BACKEND === "local";
+
+/**
+ * Root directory for the local backend, resolved at module load so relative
+ * values anchor to the process working directory.
+ */
+const DATA_DIR = resolve(process.env.FACTORY_DATA_DIR ?? ".eve/blob-data");
+
+/**
+ * Maps a document key to its local-backend path, refusing keys that would
+ * escape the data directory.
+ *
+ * @remarks
+ * Keys are derived by the feature modules (principal ids, `FACTORY_REPO`,
+ * pattern-validated artifact ids), never raw model input, but the filesystem
+ * backend still gets a containment check: defense in depth costs one
+ * comparison.
+ */
+function localDocumentPath(key: string): string {
+  const path = resolve(DATA_DIR, key);
+  if (path !== DATA_DIR && !path.startsWith(`${DATA_DIR}${sep}`)) {
+    throw new Error(
+      `Refusing a document key that escapes the data directory: ${key}`
+    );
+  }
+  return path;
+}
+
+/** Extracts the `ENOENT` marker from a filesystem error, or null. */
+const enoentCode = (error: unknown): string | null =>
+  error instanceof Error && "code" in error
+    ? String((error as NodeJS.ErrnoException).code)
+    : null;
 
 /**
  * The factory's shared Blob layer: the reserved-namespace registry and the document helpers
@@ -16,10 +78,12 @@ import { BlobNotFoundError, del, get, head, put } from "@vercel/blob";
  * points toward storage on purpose: adding a namespace is a single edit in this file, and the
  * guards can only be complete if one module sees every prefix.
  *
- * The document helpers carry the store's shared posture (public access, exact pathnames,
- * Markdown) in one place. They stay neutral about errors: API failures propagate, and each tool
- * maps them to its own output shape. Authorization resolves from the ambient Vercel OIDC
- * credentials.
+ * The document helpers carry the store's shared posture (exact pathnames,
+ * Markdown) in one place. They stay neutral about errors: storage failures
+ * propagate, and each tool maps them to its own output shape. The backend is
+ * `FACTORY_BLOB_BACKEND`: the hosted Vercel Blob store (authorized by the
+ * ambient Vercel OIDC credentials) or a local filesystem directory
+ * (`FACTORY_DATA_DIR`) for the self-hosted form.
  */
 
 /** Blob path prefix holding per-user preference files. */
@@ -153,6 +217,25 @@ export const readDocument = async (
 ): Promise<
   { found: false } | { content: string; found: true; uploadedAt: string }
 > => {
+  if (LOCAL_BLOB_BACKEND) {
+    const path = localDocumentPath(key);
+    try {
+      const [content, info] = await Promise.all([
+        readFile(path, "utf8"),
+        stat(path),
+      ]);
+      return {
+        content,
+        found: true,
+        uploadedAt: info.mtime.toISOString(),
+      };
+    } catch (error) {
+      if (enoentCode(error) === "ENOENT") {
+        return { found: false };
+      }
+      throw error;
+    }
+  }
   const result = await get(key, { access: "public" });
   if (!result?.stream) {
     return { found: false };
@@ -179,17 +262,57 @@ export const readDocument = async (
  * @param options - Whether an existing document at the key may be replaced.
  * @returns The stored blob's metadata (callers report `pathname`).
  */
-export const writeDocument = (
+export const writeDocument = async (
   key: string,
   contents: string,
   options: { allowOverwrite: boolean }
-) =>
-  put(key, contents, {
+): Promise<{ pathname: string }> => {
+  if (LOCAL_BLOB_BACKEND) {
+    const path = localDocumentPath(key);
+    await mkdir(dirname(path), { recursive: true });
+    if (options.allowOverwrite) {
+      await writeFile(path, contents, "utf8");
+      return { pathname: key };
+    }
+    // Write-once must be atomic, not probed: a stat check races a concurrent
+    // writer (an intake-issue run and a red-CI fix can dispatch together), and
+    // the loser would silently replace the winner's document. 'wx' fails with
+    // EEXIST the moment a second create lands, matching the server-side
+    // allowOverwrite: false the Vercel backend enforces.
+    const handle = await open(path, "wx").catch((error: unknown) => {
+      if (enoentCode(error) === "EEXIST") {
+        throw new Error(
+          `A document already exists at ${key} and may not be overwritten.`
+        );
+      }
+      throw error;
+    });
+    try {
+      await handle.writeFile(contents, "utf8");
+      await handle.close();
+    } catch (error) {
+      // A failed create must not leave a partial file claiming the write-once
+      // key: a retry with the same key would read as "already exists" and a
+      // reader would get truncated content. Artifact ids carry a random
+      // suffix, so today's retries pick a fresh key; the cleanup also holds
+      // for any future deterministic-key caller.
+      await handle.close().catch(() => {
+        // Best effort: the original error is the informative one.
+      });
+      await unlink(path).catch(() => {
+        // Best effort: the exec channel or the file may already be gone.
+      });
+      throw error;
+    }
+    return { pathname: key };
+  }
+  return put(key, contents, {
     access: "public",
     addRandomSuffix: false,
     allowOverwrite: options.allowOverwrite,
     contentType: "text/markdown",
   });
+};
 
 /**
  * Delete a document from the store by its exact key.
@@ -204,6 +327,19 @@ export const writeDocument = (
 export const deleteDocument = async (
   key: string
 ): Promise<{ existed: boolean }> => {
+  if (LOCAL_BLOB_BACKEND) {
+    const path = localDocumentPath(key);
+    try {
+      await stat(path);
+    } catch (error) {
+      if (enoentCode(error) === "ENOENT") {
+        return { existed: false };
+      }
+      throw error;
+    }
+    await unlink(path);
+    return { existed: true };
+  }
   try {
     await head(key);
   } catch (error) {

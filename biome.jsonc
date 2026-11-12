@@ -1,6 +1,11 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "extends": ["ultracite/biome/core"],
+  "files": {
+    // .archify/ holds generated diagram artifacts (JSON sources, never
+    // committed); they are tool output, not part of the linted surface.
+    "includes": ["!**/.archify"]
+  },
   "linter": {
     "rules": {
       "style": {

@@ -20,9 +20,8 @@ export const AUTONOMOUS_PRINCIPAL = "github:foreman-factory";
  * @remarks
  * Trust is decided once, at dispatch, on the signed webhook: the GitHub
  * channel stamps it only for commenters whose `author_association` is
- * OWNER, MEMBER, or COLLABORATOR; the Linear channel stamps it for every
- * Agent Session, because workspace membership is the gate there. Nothing
- * downstream re-derives trust from model-readable content.
+ * OWNER, MEMBER, or COLLABORATOR. Nothing downstream re-derives trust from
+ * model-readable content.
  */
 export const TRUSTED_ATTRIBUTE = "trusted";
 

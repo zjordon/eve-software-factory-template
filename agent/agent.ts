@@ -17,7 +17,7 @@ import { MODEL_CONTEXT_WINDOW_TOKENS, MODELS } from "./lib/models.js";
 export default defineAgent({
   compaction: { thresholdPercent: 0.75 },
   limits: {
-    maxOutputTokensPerSession: 100_000,
+    maxOutputTokensPerSession: 200_000,
   },
   model: MODELS.orchestrator,
   modelContextWindowTokens: MODEL_CONTEXT_WINDOW_TOKENS.orchestrator,

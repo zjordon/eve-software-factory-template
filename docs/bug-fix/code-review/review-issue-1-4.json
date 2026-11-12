@@ -1,0 +1,116 @@
+{
+  "status": "complete",
+  "llm": {
+    "model": "glm-5.3"
+  },
+  "message": "Review complete: 1 finding(s) across 3 selected item(s).",
+  "summary": {
+    "files_reviewed": 3,
+    "comments": 1,
+    "total_tokens": 82073,
+    "input_tokens": 68303,
+    "output_tokens": 13770,
+    "cache_read_tokens": 33792,
+    "elapsed": "3m32s"
+  },
+  "tool_calls": {
+    "total": 9,
+    "by_tool": {
+      "code_comment": 1,
+      "code_search": 3,
+      "file_read": 5
+    },
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [
+    {
+      "path": "scripts/backup-factory-data.sh",
+      "content": "`--ignore-failed-read` does not cover the mid-write scenario the comment claims it tolerates. It only suppresses failures on files tar cannot *open* (vanished between walk and read). A file that *changes while being read* — e.g. an active turn appending to a `.workflow-data` file while tar reads it — still makes GNU tar emit \"file changed as we read it\" and **exit with status 1**. Under `set -euo pipefail` (line 9) the script aborts right here: the retention pruning (bounded at KEEP=14) and the `tar -tzf` integrity gate never run, and the cron job reports failure. Concrete failure: nightly 03:17 run overlaps a running turn writing events → tar exit 1 → script dies mid-run; archives then accumulate unpruned on /data since retention is skipped on every such run. Exit code 1 means \"warnings only\" (archive still valid best-effort snapshot, per the header's stated semantics); only 2 is fatal — tolerate 1 explicitly.",
+      "suggestion_code": "tar_rc=0\ntar -czf \"$DEST/factory-data-$stamp.tar.gz\" \\\n  --ignore-failed-read \\\n  -C \"$REPO/.eve\" .workflow-data blob-data 2\u003e/dev/null || tar_rc=$?\n# GNU tar: 0 = clean, 1 = warnings only (e.g. \"file changed as we read it\" while a\n# turn appends live), 2 = fatal. 1 is acceptable best-effort snapshot semantics.\n[ \"$tar_rc\" -le 1 ] || exit \"$tar_rc\"",
+      "existing_code": "tar -czf \"$DEST/factory-data-$stamp.tar.gz\" \\\n  --ignore-failed-read \\\n  -C \"$REPO/.eve\" .workflow-data blob-data 2\u003e/dev/null",
+      "start_line": 20,
+      "end_line": 22,
+      "thinking": "Confirmed my analysis. Reviewing each file:\n\n**agent/lib/github/repo-sandbox.ts** — tag bump `:1` → `:2`, comment (deployment prerequisite command) updated in lockstep. Consistent with Dockerfile change and M4 doc. No issue.\n\n**agent/sandbox/Dockerfile** — curl + ca-certificates are installed in the earlier layer (line 10), so the new RUN works. Keyring pattern (armored .asc + signed-by) is valid on Debian bookworm/trixie base. `rm -rf /var/lib/apt/lists/*` matches existing style. No issue. (arch=amd64 restriction: build already proven on host per background; not a defect.)\n\n**scripts/backup-factory-data.sh** — one real issue: `--ignore-failed-read` only covers files tar cannot open (vanished between walk and read). It does NOT cover the \"file changed as we read it\" case — when a turn appends to a workflow-data file while tar is mid-read, GNU tar emits that warning and **exits 1**. Under `set -euo pipefail`, that aborts the script: retention pruning and the integrity gate are skipped and the cron run fails — exactly the live-write scenario the header comment says the script tolerates. Repeated overlapping runs also mean retention never executes, so archives accumulate beyond KEEP on /data.\n\nFix: tolerate exit 1 explicitly (1 = warnings, 2 = fatal).\n\nReport it, then task_done.",
+      "category": "bug",
+      "severity": "high"
+    }
+  ],
+  "groups": [
+    {
+      "label": "small change set",
+      "files": [
+        "agent/lib/github/repo-sandbox.ts",
+        "agent/sandbox/Dockerfile",
+        "scripts/backup-factory-data.sh"
+      ]
+    }
+  ],
+  "session_id": "52c9182e-5338-4b13-b79f-a496ee55e0cc",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "52c9182e-5338-4b13-b79f-a496ee55e0cc",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "eec21556473e2f3b36dfc7a5da93b713cc2717fe29ff2ad405efec95ef03b192"
+    },
+    "input": {
+      "mode": "range",
+      "requested_from": "48576c3",
+      "requested_head": "feat/self-hosting",
+      "resolved_base": "48576c305b1bb34e8689c8d7017ab8532c24d6e5",
+      "resolved_head": "bdffd3792e5b16af612720c21625bc0918390629",
+      "exact_range": "48576c305b1bb34e8689c8d7017ab8532c24d6e5..bdffd3792e5b16af612720c21625bc0918390629",
+      "source_artifact_sha256": "c3c28dce616b700181021bab0c8f3c68bd6f867c7aac02a67c4d2877cfab2d60"
+    },
+    "execution": {
+      "ocr_version": "v1.13.3",
+      "model": "glm-5.3",
+      "configured_concurrency": 8,
+      "rule_config_sha256": "aec8b9c66d91058e45e329dd68d74d645753d14731850de0fb7c7c854f533602",
+      "runtime_config_sha256": "d82c4b9be9df12c9a549d237bc74133f0fb6c4198a31e53dc5bd1ac7eb20251f"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "5aa37007b558ed80b9b8c51fef88af8e698bde194c4979cfbcb11df2e60e238f",
+          "path": "scripts/backup-factory-data.sh",
+          "fingerprint": "7cc0ea6fdf525c75d993bafe56aead3e1621c3216df00a7831a874be1fc09012"
+        },
+        {
+          "item_id": "839859e6d22b75e558b403d987e30b3e9f18e6d8712a6fd6d2e07dda9af96904",
+          "path": "agent/lib/github/repo-sandbox.ts",
+          "fingerprint": "1fa9eb3817ec013f508befbe2b2146c6f2f0c3f2d8a2ef3300665b1fe74a349b"
+        },
+        {
+          "item_id": "a79422dee0a02603340e18995947f8346a3be5985cc2087f64705db9095acb01",
+          "path": "agent/sandbox/Dockerfile",
+          "fingerprint": "e7701ce76f31e6a643c24323c31e8ddcb3489b9ffaf365d401fba92423ffde84"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "5aa37007b558ed80b9b8c51fef88af8e698bde194c4979cfbcb11df2e60e238f",
+          "path": "scripts/backup-factory-data.sh",
+          "fingerprint": "7cc0ea6fdf525c75d993bafe56aead3e1621c3216df00a7831a874be1fc09012"
+        },
+        {
+          "item_id": "839859e6d22b75e558b403d987e30b3e9f18e6d8712a6fd6d2e07dda9af96904",
+          "path": "agent/lib/github/repo-sandbox.ts",
+          "fingerprint": "1fa9eb3817ec013f508befbe2b2146c6f2f0c3f2d8a2ef3300665b1fe74a349b"
+        },
+        {
+          "item_id": "a79422dee0a02603340e18995947f8346a3be5985cc2087f64705db9095acb01",
+          "path": "agent/sandbox/Dockerfile",
+          "fingerprint": "e7701ce76f31e6a643c24323c31e8ddcb3489b9ffaf365d401fba92423ffde84"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": []
+    },
+    "elapsed_ms": 212148
+  }
+}

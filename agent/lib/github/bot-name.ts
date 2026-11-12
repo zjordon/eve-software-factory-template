@@ -1,6 +1,3 @@
-import { getConnectorMetadata } from "@vercel/connect";
-import { GITHUB_CONNECTOR } from "./credentials.js";
-
 /**
  * Name used where a resolution failure must not stop the work, like the
  * sandbox commit identity. Matches the template's default persona.
@@ -8,56 +5,41 @@ import { GITHUB_CONNECTOR } from "./credentials.js";
 export const FALLBACK_BOT_NAME = "Foreman";
 
 /**
- * Upper bound on a resolved bot name before it is interpolated into a
- * regular expression; GitHub App slugs are far shorter in practice.
+ * Upper bound on a bot name before it is interpolated into a regular
+ * expression; GitHub App slugs are far shorter in practice.
  */
 const MAX_BOT_NAME_LENGTH = 80;
-
-let resolvedFromConnector: string | undefined;
 
 /**
  * The name the factory answers to in `@mentions`, resolved without setup.
  *
  * @remarks
- * Resolution order:
- * 1. `FACTORY_BOT_NAME`, then `GITHUB_APP_SLUG`, for explicit overrides.
- * 2. The GitHub App's own slug from the Connect connector's metadata
- *    (`vendor.appSlug`), so the mention automatically follows whatever the
- *    deployer named their app. Fetched with the deployment's OIDC token and
- *    cached for the life of the instance.
+ * Resolution order: `FACTORY_BOT_NAME`, then `GITHUB_APP_SLUG`, matching
+ * the GitHub App this factory acts through. In the self-hosted form the
+ * App's slug is a deploy-time fact (the App is created by hand), so an
+ * explicit env value is the source of truth and there is no metadata
+ * lookup to fall back on.
  *
- * Throws when the metadata is unreachable or carries no usable slug, and the
- * failure is never cached. That contract is what the channel's lazy `botName`
- * resolution relies on: eve calls this on first use inside request handling
- * (where the OIDC token exists), caches a fulfilled name, and retries a
- * rejection on the next event, so a transient outage can't pin a wrong name.
- * Callers that need an answer no matter what catch and use
+ * Throws when neither variable is set, and the failure is never cached.
+ * That contract is what the channel's lazy `botName` resolution relies on:
+ * eve retries a rejection on the next event, so a missing configuration
+ * surfaces as a dispatch refusal instead of a silently wrong name. Callers
+ * that need an answer no matter what catch and use
  * {@link FALLBACK_BOT_NAME}.
- *
- * A hardcoded name is wrong here because the app's slug is chosen by whoever
- * registers it, and a guessed handle can belong to a real GitHub user.
  */
+// biome-ignore lint/suspicious/useAwait: the async signature is the contract (eve's lazy botName resolver and every caller await and catch it)
 export async function resolveBotName(): Promise<string> {
   const override = process.env.FACTORY_BOT_NAME ?? process.env.GITHUB_APP_SLUG;
-  if (override) {
-    return override;
-  }
-  if (resolvedFromConnector !== undefined) {
-    return resolvedFromConnector;
-  }
-  const metadata = await getConnectorMetadata(GITHUB_CONNECTOR);
-  const slug = (metadata.vendor as { appSlug?: unknown }).appSlug;
   if (
-    typeof slug !== "string" ||
-    slug.length === 0 ||
-    slug.length > MAX_BOT_NAME_LENGTH
+    typeof override !== "string" ||
+    override.length === 0 ||
+    override.length > MAX_BOT_NAME_LENGTH
   ) {
     throw new Error(
-      `Connector ${GITHUB_CONNECTOR} metadata carries no usable GitHub App slug.`
+      "Set GITHUB_APP_SLUG (or FACTORY_BOT_NAME) to the GitHub App's slug so @mentions of the factory can be recognized."
     );
   }
-  resolvedFromConnector = slug;
-  return slug;
+  return override;
 }
 
 /**
@@ -66,8 +48,8 @@ export async function resolveBotName(): Promise<string> {
  *
  * @remarks
  * The name is escaped for literal matching before interpolation, and
- * {@link resolveBotName} bounds its length, so connector-supplied data can
- * never change the pattern's meaning.
+ * {@link resolveBotName} bounds its length, so env-supplied data can never
+ * change the pattern's meaning.
  */
 export function mentionPattern(botName: string): RegExp {
   const escaped = botName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
