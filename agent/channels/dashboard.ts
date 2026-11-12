@@ -206,7 +206,7 @@ const runPanelPage = (): string => `<!doctype html>
 <section id="detail-view" hidden>
   <p><button id="back">← 返回列表</button></p>
   <div class="card" id="detail"></div>
-  <div class="card"><div class="muted">实时事件（断流后自动转为 10 秒轮询）</div><pre id="live"></pre></div>
+  <div class="card"><div class="muted">实时事件（进入站点时跟随站点会话流；断流后自动转为 10 秒轮询）</div><pre id="live"></pre></div>
 </section>
 <script>
 "use strict";
@@ -364,16 +364,64 @@ function describeStreamEvent(event) {
     case "session.completed": return "会话完成";
     case "session.failed": return "会话失败";
     case "actions.requested": {
-      const names = (event.data?.actions ?? []).map((action) => action.name).join(", ");
+      const names = (event.data?.actions ?? []).map((action) => action.toolName).join(", ");
       return "请求动作：" + (names || "?");
     }
     case "action.result": {
       const name = event.data?.result?.toolName ?? "?";
       return "动作结束：" + name + "（" + (event.data?.status ?? "?") + "）";
     }
+    case "message.completed": return "回复完成";
     case "input.requested": return "审批卡出现";
-    case "message.appended": return null;
+    // 流式增量块（每秒多条）不进实时区，只留生命周期边界。
+    case "message.appended":
+    case "reasoning.appended":
+    case "reasoning.completed":
+    case "action.input.appended":
+    case "action.partial":
+      return null;
     default: return event.type;
+  }
+}
+
+async function pump(response, onEvent) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) return;
+    buffer += decoder.decode(value, { stream: true });
+    let newline = buffer.indexOf("\\n");
+    while (newline !== -1) {
+      const line = buffer.slice(0, newline).trim();
+      buffer = buffer.slice(newline + 1);
+      if (line !== "") {
+        try { onEvent(JSON.parse(line)); } catch { /* 忽略半行 */ }
+      }
+      newline = buffer.indexOf("\\n");
+    }
+  }
+}
+
+// 站点跑在自己的子会话里（根流只在站点边界出声），进入站点时跟随其会话流，
+// 让长工具调用（如 sandbox 首次 uv sync）期间实时区也有动静。
+let childAbort = null;
+function closeChild() {
+  if (childAbort !== null) { childAbort.abort(); childAbort = null; }
+}
+async function followChild(childSessionId, tag) {
+  closeChild();
+  childAbort = new AbortController();
+  try {
+    const response = await fetch("/run/" + encodeURIComponent(childSessionId) + "/stream", { signal: childAbort.signal });
+    if (!response.ok || response.body === null) throw new Error("HTTP " + response.status);
+    await pump(response, (event) => {
+      const text = describeStreamEvent(event);
+      if (text !== null) liveLine(clock(new Date().toISOString()) + " [" + tag + "] " + text);
+    });
+  } catch (error) {
+    if (error.name !== "AbortError") liveLine("[" + tag + "] 站点会话流结束");
   }
 }
 
@@ -397,26 +445,19 @@ async function followLive(id) {
     });
     if (!response.ok || response.body === null) throw new Error("HTTP " + response.status);
     liveLine("—— 已接入实时流 ——");
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      let newline = buffer.indexOf("\\n");
-      while (newline !== -1) {
-        const line = buffer.slice(0, newline).trim();
-        buffer = buffer.slice(newline + 1);
-        if (line !== "") {
-          try {
-            const text = describeStreamEvent(JSON.parse(line));
-            if (text !== null) liveLine(clock(new Date().toISOString()) + " " + text);
-          } catch { /* 忽略半行 */ }
-        }
-        newline = buffer.indexOf("\\n");
+    await pump(response, (event) => {
+      if (event.type === "subagent.called" && event.data?.childSessionId) {
+        const tag = event.data.name ?? "站点";
+        liveLine(clock(new Date().toISOString()) + " → 进入站点 " + tag + "（跟随其会话流）");
+        followChild(event.data.childSessionId, tag);
+        return;
       }
-    }
+      if (event.type === "action.result" && String(event.data?.result?.toolName ?? "").startsWith("run_")) {
+        closeChild();
+      }
+      const text = describeStreamEvent(event);
+      if (text !== null) liveLine(clock(new Date().toISOString()) + " " + text);
+    });
     liveLine("—— 实时流结束 ——");
   } catch (error) {
     if (error.name !== "AbortError") {
@@ -442,6 +483,7 @@ async function followLive(id) {
 function route() {
   const id = decodeURIComponent(location.hash.replace(/^#/, ""));
   if (liveAbort !== null) liveAbort.abort();
+  closeChild();
   if (pollTimer !== null) { clearInterval(pollTimer); pollTimer = null; }
   $("live").textContent = "";
   if (id === "") {
