@@ -414,6 +414,13 @@ function renderActivity() {
 }
 setInterval(renderActivity, 1000);
 
+// 事件自身的时间（meta.at），渲染时钟只做兜底——回放 12 条会在连接瞬间
+// 一起到达，盖渲染时钟会全显同一时刻，读不出先后与新旧。
+function eventTime(event) {
+  const at = event.meta && event.meta.at;
+  return clock(typeof at === "string" ? at : new Date().toISOString());
+}
+
 function describeStreamEvent(event) {
   switch (event.type) {
     case "turn.started": return "轮开始";
@@ -488,7 +495,7 @@ async function followChild(childSessionId, tag) {
         seen += 1;
         const text = describeStreamEvent(event);
         if (text !== null) {
-          liveLine((seen <= 12 ? "↩ " : "") + clock(new Date().toISOString()) + " [" + tag + "] " + text);
+          liveLine((seen <= 12 ? "↩ " : "") + eventTime(event) + " [" + tag + "] " + text);
         }
         touchActivity(tag);
       });
@@ -546,7 +553,7 @@ async function followLive(id) {
           const prefix = seen <= 12 ? "↩ " : "";
           if (event.type === "subagent.called" && event.data?.childSessionId) {
             const tag = event.data.name ?? "站点";
-            liveLine(prefix + clock(new Date().toISOString()) + " → 进入站点 " + tag + "（跟随其会话流）");
+            liveLine(prefix + eventTime(event) + " → 进入站点 " + tag + "（跟随其会话流）");
             followChild(event.data.childSessionId, tag);
             return;
           }
@@ -554,7 +561,7 @@ async function followLive(id) {
             closeChild();
           }
           const text = describeStreamEvent(event);
-          if (text !== null) liveLine(prefix + clock(new Date().toISOString()) + " " + text);
+          if (text !== null) liveLine(prefix + eventTime(event) + " " + text);
           touchActivity("会话");
         });
         liveLine("—— 实时流结束 ——");
