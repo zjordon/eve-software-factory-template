@@ -207,6 +207,7 @@ issue 打 factory 标签
 |------|------|------|
 | 工作流状态 | `.eve/.workflow-data/` | 是(M4) |
 | 偏好 / 工厂大脑 / 工件 | `FACTORY_DATA_DIR`(默认 `.eve/blob-data/`) | 是(M4) |
+| 运行记录(面板数据面,M5) | `FACTORY_RUN_RECORDS_DIR`(默认 `.eve/run-records/`) | 是(M5;终态 30 天自清理) |
 | git 线程记忆(CI 修复环计数) | GitHub PR 评论(远端) | 随仓库 |
 
 ### 2.8 常驻运行形态(M2 实测布局,2026-10-21)
@@ -227,6 +228,15 @@ issue 打 factory 标签
 - **事件流**:issue 打 `factory` 标签(`labeled` 动作,含建单时带标签)→ 派发自治主体 → 四站 → 草稿 PR → 机器人回帖;@提及走 OWNER/MEMBER/COLLABORATOR 受信路径。全链 2026-10-31/11-01 双隧道(quick/named)各实测一轮,约 7 分钟;examination-system 接管轮约 30 分钟(含每站全量 uv sync 首次开销)。
 - **站点沙箱镜像**:`agent/sandbox/Dockerfile`(python:3.12-slim + git + uv + Chromium baked,约 2.07GB)构建为本地标签 `foreman-station:1`,各站 `createFactoryEnvironment` 经 `DockerSandbox.image()` 显式引用。**部署契约:`eve build` 前必须先 `docker build -t foreman-station:1 agent/sandbox/`**;镜像标签进位会翻转全部站点模板世代键,自动重建。教训存档:`DockerSandbox.dockerfile()` 的文件集发现按各 agent 自身目录解析,子代理目录无 Dockerfile 时**静默回落默认镜像**——共享工厂能力用显式引用,不靠约定。
 - **pm2 环境缓存(运维口径)**:pm2 在 start 时捕获的 env 会注入子进程并覆盖 `.env.local` 所载,`--update-env` 清不净 dump——env 变更的正确姿势是 `pm2 delete` + 干净 shell 全新 `start` + `pm2 save`。
+
+### 2.10 观测面:插桩 → 记录 → 面板(M5,2026-11-12)
+
+- **链路**:`agent/instrumentation/runs.ts`(defineInstrumentation 旁路,显式 metadata-only tracePolicy)把根会话生命周期事件落成 `.eve/run-records/<sessionId>.json`(`agent/lib/observability/run-store.ts` 持有结构与读写);`agent/channels/github.ts` 的空闲键 events 补上 instrumentation 拿不到的 GitHub 线程映射(continuation token `repo:<id>:issue:<n>` 解析 + `intakeIssue` auth 槽位)与草稿 PR URL;`agent/channels/dashboard.ts` 以自定义通道路由只读呈现。三写一方共用 run-store,零新进程,与主服务同生共死。
+- **幂等**:事件按 `${event.type}:${idempotencyKey}` upsert(start 与终态共享 key,键必须含 type),`seenKeys` 环形封顶——kill -9 重启重放实测无重复计数(turns/token 各归各)。
+- **归属**:站点子会话不建记录;model.call 的 token 与 run_*/push_branch/github__createPullRequest 动作按 `scope.rootSessionId` 归并到根 run(`rootSessionId` 缺省即根自身,实测 eve channel 会话即此形态)。
+- **面板**:`GET /runs`(列表 JSON,僵尸置顶)/ `GET /run/:id`(详情)/ `GET /run/:id/stream`(attachSession NDJSON 实时跟随,断流降级 10 秒轮询)/ `GET /runs/ui`(内联单页,30 秒轮询)。认证走 `agent/lib/route-auth.ts`(从 eve.ts 抽出的 Basic 策略,实测 401 + Basic challenge);路径刻意用 `/run/:id` 避开 `/runs/ui` 静态/参数歧义。
+- **僵尸检测(读时计算)**:护栏挂起型 = 未 resolve 的 input.requested 停滞 > 30 分钟且非终态;错误循环型 = 连续 ≥2 次 turn.failed(errorType 取 action 层 errorCode,turn 层错误详情属内容、metadata-only 不落)。实测构造样本两型均正确置顶标红。
+- **内容边界**:面板与记录只含元数据(issue 号、动作名、时长、token 数、PR URL、errorCode);对话内容、偏好、工厂大脑永不进数据面。
 
 ## 3. 依赖关系
 
