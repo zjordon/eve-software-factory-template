@@ -318,18 +318,18 @@ function renderDetail(run) {
   const failures = r.turnFailures.map((failure) =>
     "<div>" + clock(failure.at) + " <code>" + esc(failure.errorType) + "</code></div>").join("");
   $("detail").innerHTML =
-    "<div class="kv">"
-    + "<dt>线程</dt><dd>" + threadCell(r).replace(/<div>/g, "").replace(/</div>/g, " · ") + "</dd>"
+    '<div class="kv">'
+    + "<dt>线程</dt><dd>" + threadCell(r).replace(/<div>/g, "").replace(/<\\/div>/g, " · ") + "</dd>"
     + "<dt>会话</dt><dd><code>" + esc(r.sessionId) + "</code></dd>"
     + "<dt>状态</dt><dd>" + statusCell(r) + (r.terminal !== null ? " · " + clock(r.terminal.at) : "") + "</dd>"
     + "<dt>令牌</dt><dd>输入 " + fmtTokens(r.modelUsage.inputTokens) + " / 输出 " + fmtTokens(r.modelUsage.outputTokens)
       + "（缓存读 " + fmtTokens(r.modelUsage.cacheReadTokens) + "，写 " + fmtTokens(r.modelUsage.cacheWriteTokens) + "，调用 " + r.modelUsage.calls + " 次）</dd>"
     + "<dt>轮</dt><dd>" + r.turns.started + " 轮，失败 " + r.turns.failed + "</dd>"
-    + (r.prUrl !== null ? "<dt>PR</dt><dd><a href="" + esc(r.prUrl) + "" target="_blank" rel="noopener">" + esc(r.prUrl) + "</a></dd>" : "")
+    + (r.prUrl !== null ? '<dt>PR</dt><dd><a href="' + esc(r.prUrl) + '" target="_blank" rel="noopener">' + esc(r.prUrl) + "</a></dd>" : "")
     + (run.zombie !== null ? "<dt>僵尸</dt><dd><b>" + esc(run.zombie.type) + "</b>（" + esc(run.zombie.detail) + "，自 " + esc(run.zombie.since) + "）</dd>" : "")
     + "</div>"
     + "<hr><div><b>站点时间线</b></div>" + stages
-    + "<div style="margin-top:0.5rem"><b>审批卡</b></div>" + inputs
+    + '<div style="margin-top:0.5rem"><b>审批卡</b></div>' + inputs
     + (failures === "" ? "" : '<div style="margin-top:0.5rem"><b>失败轮</b></div>' + failures);
 }
 

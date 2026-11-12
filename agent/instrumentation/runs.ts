@@ -216,8 +216,9 @@ export default defineInstrumentation({
                   resolvedAt: null,
                 },
               ];
-              // Prune oldest resolved entries when over cap; unresolved ones
-              // are exactly what the hang detector needs to keep.
+              // Prune the overflow off the oldest resolved entries;
+              // unresolved ones are exactly what the hang detector needs to
+              // keep, even past the cap.
               const open = record.inputRequests.filter(
                 (request) => request.resolvedAt === null
               );
@@ -225,11 +226,11 @@ export default defineInstrumentation({
                 (request) => request.resolvedAt !== null
               );
               if (record.inputRequests.length > INPUT_REQUESTS_CAP) {
-                const keep = INPUT_REQUESTS_CAP - open.length;
-                record.inputRequests = [
-                  ...resolved.slice(Math.max(keep, 0)),
-                  ...open,
-                ];
+                const drop = Math.min(
+                  resolved.length,
+                  record.inputRequests.length - INPUT_REQUESTS_CAP
+                );
+                record.inputRequests = [...resolved.slice(drop), ...open];
               }
             },
             { dedupeKey: dedupeKey(event.type, event.idempotencyKey) }
