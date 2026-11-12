@@ -476,9 +476,13 @@ async function followChild(childSessionId, tag) {
       const response = await fetch("/run/" + encodeURIComponent(childSessionId) + "/stream?tail=12", { signal: childAbort.signal });
       if (!response.ok || response.body === null) throw new Error("HTTP " + response.status);
       failures = 0;
+      let seen = 0;
       await pump(response, (event) => {
+        seen += 1;
         const text = describeStreamEvent(event);
-        if (text !== null) liveLine(clock(new Date().toISOString()) + " [" + tag + "] " + text);
+        if (text !== null) {
+          liveLine((seen <= 12 ? "↩ " : "") + clock(new Date().toISOString()) + " [" + tag + "] " + text);
+        }
         touchActivity(tag);
       });
       // 正常结束（站点完成，会话终态）不重连，避免对终态会话空转。
@@ -495,24 +499,31 @@ async function followChild(childSessionId, tag) {
   }
 }
 
+// 详情数字（状态/令牌/时间线）随此刷新收敛：多窗口各自的重连史不同，
+// 定时拉取让 KV 块最多落后 30 秒，而不是各窗口各说各话。
+async function refreshDetail(id) {
+  try {
+    const run = await fetchJSON("/run/" + encodeURIComponent(id));
+    if (selected === id) {
+      renderDetail(run);
+    }
+    return run.record.terminal !== null;
+  } catch {
+    return false;
+  }
+}
+
 async function followLive(id) {
   if (liveAbort !== null) liveAbort.abort();
   liveAbort = new AbortController();
   let fellBack = false;
-  const pollOnce = async () => {
-    try {
-      const run = await fetchJSON("/run/" + encodeURIComponent(id));
-      renderDetail(run);
-      return run.record.terminal !== null;
-    } catch {
-      return false;
-    }
-  };
+  const pollOnce = () => refreshDetail(id);
   try {
     liveLine("—— 已接入实时流 ——");
     // 空闲代理会在长工具期间掐断静默流（心跳之外仍可能断）：先重连（3 次、
     // 间隔 5 秒），连败才真正降级轮询；正常结束（会话终态/服务重启）走同一条
-    // 重连路径，由 pollOnce 决定是否收手。
+    // 重连路径，由 pollOnce 决定是否收手。每次连接的前 TAIL 条是回放（?tail
+    // 参数），行首标 ↩，与直播行区分——多窗口回放窗口不同是预期，不再误读。
     let failures = 0;
     while (selected === id) {
       try {
@@ -522,10 +533,13 @@ async function followLive(id) {
         });
         if (!response.ok || response.body === null) throw new Error("HTTP " + response.status);
         failures = 0;
+        let seen = 0;
         await pump(response, (event) => {
+          seen += 1;
+          const prefix = seen <= 12 ? "↩ " : "";
           if (event.type === "subagent.called" && event.data?.childSessionId) {
             const tag = event.data.name ?? "站点";
-            liveLine(clock(new Date().toISOString()) + " → 进入站点 " + tag + "（跟随其会话流）");
+            liveLine(prefix + clock(new Date().toISOString()) + " → 进入站点 " + tag + "（跟随其会话流）");
             followChild(event.data.childSessionId, tag);
             return;
           }
@@ -533,7 +547,7 @@ async function followLive(id) {
             closeChild();
           }
           const text = describeStreamEvent(event);
-          if (text !== null) liveLine(clock(new Date().toISOString()) + " " + text);
+          if (text !== null) liveLine(prefix + clock(new Date().toISOString()) + " " + text);
           touchActivity("会话");
         });
         liveLine("—— 实时流结束 ——");
@@ -602,6 +616,8 @@ window.addEventListener("hashchange", route);
 route();
 refreshList();
 setInterval(() => { if (selected === null) refreshList(); }, 30000);
+// 详情打开时数字定时收敛（多窗口一致性），与流的生命周期解耦。
+setInterval(() => { if (selected !== null) refreshDetail(selected); }, 30000);
 </script>
 </body>
 </html>`;
