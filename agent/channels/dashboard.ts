@@ -95,9 +95,27 @@ export default defineChannel({
         // the same framing the eve channel's own stream route uses. Handing
         // the object stream to Response directly aborts the connection with
         // an empty reply (verified live; the doc example is misleading).
+        // A blank line every 25s keeps bytes flowing while a station runs a
+        // long quiet tool: idle proxies (the Cloudflare edge cuts ~100s) kill
+        // silent streams otherwise. Readers skip blank lines.
         const encoder = new TextEncoder();
+        let keepAlive: ReturnType<typeof setInterval> | undefined;
         const body = events.pipeThrough(
           new TransformStream({
+            start(controller) {
+              keepAlive = setInterval(() => {
+                try {
+                  controller.enqueue(encoder.encode("\n"));
+                } catch {
+                  // The readable side is gone (client disconnected): the
+                  // Transformer type has no cancel slot in this TS lib, so
+                  // the first failed enqueue is the stop signal.
+                  if (keepAlive !== undefined) {
+                    clearInterval(keepAlive);
+                  }
+                }
+              }, 25_000);
+            },
             transform: (event, controller) => {
               controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
             },
@@ -413,15 +431,27 @@ function closeChild() {
 async function followChild(childSessionId, tag) {
   closeChild();
   childAbort = new AbortController();
-  try {
-    const response = await fetch("/run/" + encodeURIComponent(childSessionId) + "/stream", { signal: childAbort.signal });
-    if (!response.ok || response.body === null) throw new Error("HTTP " + response.status);
-    await pump(response, (event) => {
-      const text = describeStreamEvent(event);
-      if (text !== null) liveLine(clock(new Date().toISOString()) + " [" + tag + "] " + text);
-    });
-  } catch (error) {
-    if (error.name !== "AbortError") liveLine("[" + tag + "] 站点会话流结束");
+  let failures = 0;
+  for (;;) {
+    try {
+      const response = await fetch("/run/" + encodeURIComponent(childSessionId) + "/stream", { signal: childAbort.signal });
+      if (!response.ok || response.body === null) throw new Error("HTTP " + response.status);
+      failures = 0;
+      await pump(response, (event) => {
+        const text = describeStreamEvent(event);
+        if (text !== null) liveLine(clock(new Date().toISOString()) + " [" + tag + "] " + text);
+      });
+      // 正常结束（站点完成，会话终态）不重连，避免对终态会话空转。
+      return;
+    } catch (error) {
+      if (error.name === "AbortError") return;
+      failures += 1;
+      if (failures > 2) {
+        liveLine("[" + tag + "] 站点会话流结束");
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
   }
 }
 
@@ -439,26 +469,49 @@ async function followLive(id) {
     }
   };
   try {
-    const response = await fetch("/run/" + encodeURIComponent(id) + "/stream", {
-      accept: "application/x-ndjson",
-      signal: liveAbort.signal,
-    });
-    if (!response.ok || response.body === null) throw new Error("HTTP " + response.status);
     liveLine("—— 已接入实时流 ——");
-    await pump(response, (event) => {
-      if (event.type === "subagent.called" && event.data?.childSessionId) {
-        const tag = event.data.name ?? "站点";
-        liveLine(clock(new Date().toISOString()) + " → 进入站点 " + tag + "（跟随其会话流）");
-        followChild(event.data.childSessionId, tag);
+    // 空闲代理会在长工具期间掐断静默流（心跳之外仍可能断）：先重连（3 次、
+    // 间隔 5 秒），连败才真正降级轮询；正常结束（会话终态/服务重启）走同一条
+    // 重连路径，由 pollOnce 决定是否收手。
+    let failures = 0;
+    while (selected === id) {
+      try {
+        const response = await fetch("/run/" + encodeURIComponent(id) + "/stream", {
+          accept: "application/x-ndjson",
+          signal: liveAbort.signal,
+        });
+        if (!response.ok || response.body === null) throw new Error("HTTP " + response.status);
+        failures = 0;
+        await pump(response, (event) => {
+          if (event.type === "subagent.called" && event.data?.childSessionId) {
+            const tag = event.data.name ?? "站点";
+            liveLine(clock(new Date().toISOString()) + " → 进入站点 " + tag + "（跟随其会话流）");
+            followChild(event.data.childSessionId, tag);
+            return;
+          }
+          if (event.type === "action.result" && String(event.data?.result?.toolName ?? "").startsWith("run_")) {
+            closeChild();
+          }
+          const text = describeStreamEvent(event);
+          if (text !== null) liveLine(clock(new Date().toISOString()) + " " + text);
+        });
+        liveLine("—— 实时流结束 ——");
+      } catch (streamError) {
+        if (streamError.name === "AbortError" || selected !== id) {
+          return;
+        }
+        failures += 1;
+        if (failures > 3) {
+          throw streamError;
+        }
+        liveLine("—— 流中断（" + String(streamError).replace(/\\n/g, " ") + "），5 秒后重连 ——");
+      }
+      const done = await pollOnce();
+      if (done || selected !== id) {
         return;
       }
-      if (event.type === "action.result" && String(event.data?.result?.toolName ?? "").startsWith("run_")) {
-        closeChild();
-      }
-      const text = describeStreamEvent(event);
-      if (text !== null) liveLine(clock(new Date().toISOString()) + " " + text);
-    });
-    liveLine("—— 实时流结束 ——");
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
   } catch (error) {
     if (error.name !== "AbortError") {
       liveLine("—— 实时流不可用（" + String(error).replace(/\\n/g, " ") + "），降级为 10 秒轮询 ——");
