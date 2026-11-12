@@ -275,20 +275,6 @@ export default defineInstrumentation({
         },
         { dedupeKey: dedupeKey(event.type, event.idempotencyKey) }
       ),
-    // The poisoned-history failure mode (AI SDK AI_MissingToolResultsError,
-    // seen live on #33) surfaces at the step level without a model.call
-    // terminal; this is the last structural grip for typing the turn failure.
-    "step.attempt.failed": (event) =>
-      upsertRun(
-        rootOf(event.scope),
-        (record) => {
-          record.actionErrors = [
-            ...record.actionErrors,
-            { at: nowIso(), errorCode: "STEP_ATTEMPT_FAILED" },
-          ].slice(-ACTION_ERRORS_CAP);
-        },
-        { dedupeKey: dedupeKey(event.type, event.idempotencyKey) }
-      ),
     "session.completed": (event) =>
       upsertRun(
         event.sessionId,
@@ -327,6 +313,20 @@ export default defineInstrumentation({
           }
         },
         { onlyIfExists: true }
+      ),
+    // The poisoned-history failure mode (AI SDK AI_MissingToolResultsError,
+    // seen live on #33) surfaces at the step level without a model.call
+    // terminal; this is the last structural grip for typing the turn failure.
+    "step.attempt.failed": (event) =>
+      upsertRun(
+        rootOf(event.scope),
+        (record) => {
+          record.actionErrors = [
+            ...record.actionErrors,
+            { at: nowIso(), errorCode: "STEP_ATTEMPT_FAILED" },
+          ].slice(-ACTION_ERRORS_CAP);
+        },
+        { dedupeKey: dedupeKey(event.type, event.idempotencyKey) }
       ),
     "turn.cancelled": (event) =>
       upsertRun(
