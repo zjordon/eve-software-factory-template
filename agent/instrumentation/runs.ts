@@ -101,13 +101,32 @@ const findStage = (
  * `errorCode` fields (action failures); turn-level failures record "unknown"
  * when no action code is available.
  */
+/**
+ * Whether this process records runs at all. Eval servers (whose setup context
+ * carries an `evaluation` ref) must not: their sessions are harness artifacts,
+ * and writing them into the shared `.eve/run-records/` pollutes the operator
+ * panel with waiting-forever test sessions and phantom approval-hang zombies.
+ */
+let recording = true;
+
+const track = (
+  sessionId: string,
+  mutator: (record: RunRecord) => void,
+  options?: {
+    dedupeKey?: string;
+    onlyIfExists?: boolean;
+    writeIf?: (record: RunRecord) => boolean;
+  }
+): Promise<void> | undefined =>
+  recording ? upsertRun(sessionId, mutator, options) : undefined;
+
 export default defineInstrumentation({
   events: {
     "action.completed": (event) =>
       // Ordinary tool completions carry no stage or run-level signal (model
       // usage is aggregated from model.call events), so writeIf keeps them
       // free: no write per tool call.
-      upsertRun(
+      track(
         rootOf(event.scope),
         (record) => {
           const stage = findStage(record, event.idempotencyKey);
@@ -129,7 +148,7 @@ export default defineInstrumentation({
         }
       ),
     "action.failed": (event) =>
-      upsertRun(
+      track(
         rootOf(event.scope),
         (record) => {
           const stage = findStage(record, event.idempotencyKey);
@@ -149,7 +168,7 @@ export default defineInstrumentation({
       ),
     "action.started": (event) =>
       isStageAction(event.name)
-        ? upsertRun(
+        ? track(
             rootOf(event.scope),
             (record) => {
               record.stages = [
@@ -179,7 +198,7 @@ export default defineInstrumentation({
         : undefined,
     "channel.delivery.completed": (event) =>
       event.sessionId === event.rootSessionId
-        ? upsertRun(
+        ? track(
             event.sessionId,
             (record) => {
               record.deliveries.count += 1;
@@ -190,7 +209,7 @@ export default defineInstrumentation({
         : undefined,
     "channel.delivery.failed": (event) =>
       event.sessionId === event.rootSessionId
-        ? upsertRun(
+        ? track(
             event.sessionId,
             (record) => {
               record.deliveries.count += 1;
@@ -201,7 +220,7 @@ export default defineInstrumentation({
         : undefined,
     "input.requested": (event) =>
       isRootScope(event.scope)
-        ? upsertRun(
+        ? track(
             event.scope.sessionId,
             (record) => {
               record.inputRequests = [
@@ -238,7 +257,7 @@ export default defineInstrumentation({
         : undefined,
     "input.resolved": (event) =>
       isRootScope(event.scope)
-        ? upsertRun(
+        ? track(
             event.scope.sessionId,
             (record) => {
               const request = record.inputRequests.find(
@@ -253,7 +272,7 @@ export default defineInstrumentation({
           )
         : undefined,
     "model.call.completed": (event) =>
-      upsertRun(
+      track(
         rootOf(event.scope),
         (record) => {
           addTokens(record.modelUsage, tokensFromUsage(event.usage));
@@ -265,7 +284,7 @@ export default defineInstrumentation({
     // of an unhelpful "unknown" (the GLM endpoint throws AI SDK protocol
     // errors like AI_MissingToolResultsError every so often).
     "model.call.failed": (event) =>
-      upsertRun(
+      track(
         rootOf(event.scope),
         (record) => {
           record.actionErrors = [
@@ -276,7 +295,7 @@ export default defineInstrumentation({
         { dedupeKey: dedupeKey(event.type, event.idempotencyKey) }
       ),
     "session.completed": (event) =>
-      upsertRun(
+      track(
         event.sessionId,
         (record) => {
           record.status = "completed";
@@ -285,7 +304,7 @@ export default defineInstrumentation({
         { onlyIfExists: true }
       ),
     "session.failed": (event) =>
-      upsertRun(
+      track(
         event.sessionId,
         (record) => {
           record.status = "failed";
@@ -297,7 +316,7 @@ export default defineInstrumentation({
       // Child (station) sessions attribute to their root and never get a
       // record of their own.
       event.parentLineage === undefined
-        ? upsertRun(event.sessionId, (record) => {
+        ? track(event.sessionId, (record) => {
             record.channel ??= event.channelType ?? event.channelKind ?? null;
             if (record.title === null && typeof event.title === "string") {
               record.title = event.title;
@@ -305,7 +324,7 @@ export default defineInstrumentation({
           })
         : undefined,
     "session.waiting": (event) =>
-      upsertRun(
+      track(
         event.sessionId,
         (record) => {
           if (record.terminal === null) {
@@ -318,7 +337,7 @@ export default defineInstrumentation({
     // seen live on #33) surfaces at the step level without a model.call
     // terminal; this is the last structural grip for typing the turn failure.
     "step.attempt.failed": (event) =>
-      upsertRun(
+      track(
         rootOf(event.scope),
         (record) => {
           record.actionErrors = [
@@ -329,7 +348,7 @@ export default defineInstrumentation({
         { dedupeKey: dedupeKey(event.type, event.idempotencyKey) }
       ),
     "turn.cancelled": (event) =>
-      upsertRun(
+      track(
         event.sessionId,
         (record) => {
           record.failureStreak = 0;
@@ -342,7 +361,7 @@ export default defineInstrumentation({
     // Terminal turn events carry no rootSessionId, so root filtering rides on
     // onlyIfExists: station child sessions have no record to update.
     "turn.completed": (event) =>
-      upsertRun(
+      track(
         event.sessionId,
         (record) => {
           record.failureStreak = 0;
@@ -353,7 +372,7 @@ export default defineInstrumentation({
         }
       ),
     "turn.failed": (event) =>
-      upsertRun(
+      track(
         event.sessionId,
         (record) => {
           record.turns.failed += 1;
@@ -377,7 +396,7 @@ export default defineInstrumentation({
       ),
     "turn.started": (event) =>
       event.sessionId === event.rootSessionId
-        ? upsertRun(
+        ? track(
             event.sessionId,
             (record) => {
               record.turns.started += 1;
@@ -398,10 +417,15 @@ export default defineInstrumentation({
           )
         : undefined,
   },
-  setup: async () => {
-    await sweepExpired().catch((error: unknown) => {
-      console.error("runs instrumentation: retention sweep failed", error);
-    });
+  setup: async (context) => {
+    // Eval servers carry an `evaluation` ref; their sessions are harness
+    // artifacts and never reach the panel's shared records directory.
+    recording = context.evaluation === undefined;
+    if (recording) {
+      await sweepExpired().catch((error: unknown) => {
+        console.error("runs instrumentation: retention sweep failed", error);
+      });
+    }
   },
   tracePolicy: () => ({
     emit: true,
