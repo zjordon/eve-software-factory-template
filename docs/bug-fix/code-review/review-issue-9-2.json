@@ -1,0 +1,92 @@
+{
+  "status": "complete",
+  "llm": {
+    "model": "glm-5.3"
+  },
+  "message": "Review complete: 0 finding(s) across 1 selected item(s).",
+  "summary": {
+    "files_reviewed": 1,
+    "comments": 0,
+    "total_tokens": 36110,
+    "input_tokens": 18444,
+    "output_tokens": 17666,
+    "cache_read_tokens": 7488,
+    "elapsed": "4m40s"
+  },
+  "tool_calls": {
+    "total": 2,
+    "by_tool": {
+      "code_search": 1,
+      "file_read": 1
+    },
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [],
+  "groups": [
+    {
+      "label": "agent/lib/models.ts",
+      "files": ["agent/lib/models.ts"]
+    }
+  ],
+  "session_id": "beedd35a-16b8-4f49-bf54-14f824ab73dc",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "beedd35a-16b8-4f49-bf54-14f824ab73dc",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "a82aa01c5f1f63fd659f972dc306afe00ac314298406c1c2142f55677361688b"
+    },
+    "input": {
+      "mode": "range",
+      "requested_from": "fd8ccdb",
+      "requested_head": "fix/9-model-fetch-logging",
+      "resolved_base": "fd8ccdbc873295594a76b5feadf40f8b21face8c",
+      "resolved_head": "c4ac708083f3e885ea062c95b7b1b0c55b9a4c9b",
+      "exact_range": "fd8ccdbc873295594a76b5feadf40f8b21face8c..c4ac708083f3e885ea062c95b7b1b0c55b9a4c9b",
+      "source_artifact_sha256": "3fb44c3f023252c6e3ca20079d5a1b0a48c8bd4fdf051c4355b7774f594531fb"
+    },
+    "execution": {
+      "ocr_version": "v1.13.10",
+      "model": "glm-5.3",
+      "configured_concurrency": 8,
+      "max_tool_request_times": 100,
+      "rule_config_sha256": "8d2f5b7546bb267cfe69043c779b086c9d97be6115201297eab993604b7794f0",
+      "runtime_config_sha256": "d82c4b9be9df12c9a549d237bc74133f0fb6c4198a31e53dc5bd1ac7eb20251f"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "b083ae27432ae3f0d18dfa05e8226c8edfe4e9b75048bd99b12f4f81e7107cc0",
+          "path": "agent/lib/models.ts",
+          "fingerprint": "45eaff8b2cef7aba6555dc5e5d693ccf644d51d2b96eb5dede865a5a700e41bd"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "b083ae27432ae3f0d18dfa05e8226c8edfe4e9b75048bd99b12f4f81e7107cc0",
+          "path": "agent/lib/models.ts",
+          "fingerprint": "45eaff8b2cef7aba6555dc5e5d693ccf644d51d2b96eb5dede865a5a700e41bd"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": [],
+      "excluded": [
+        {
+          "item_id": "6b541ab9ac38a50f5a8435d1833ae89000da6393a09a1e54c3f584f70496c0f5",
+          "path": "docs/implement-plan/模型网关调试日志.md",
+          "exclude_reason": "user_exclude"
+        },
+        {
+          "item_id": "c8a171305914fd75d4a46e984e70dec983569d20a80fbdebb6a6d59e3738df36",
+          "path": "docs/bug-fix/code-review/review-issue-9-1.json",
+          "exclude_reason": "user_exclude"
+        }
+      ]
+    },
+    "elapsed_ms": 280228
+  }
+}
