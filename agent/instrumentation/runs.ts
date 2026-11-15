@@ -314,8 +314,20 @@ export default defineInstrumentation({
       ),
     "session.started": (event) =>
       // Child (station) sessions attribute to their root and never get a
-      // record of their own.
-      event.parentLineage === undefined
+      // record of their own. Framework-internal workflows (session timeout,
+      // activity collector) also start parentless sessions — a restart
+      // replays them by the dozen off the durable queue — and without a
+      // guard each one lands on the panel as a running/waiting record with
+      // no turns and no thread. Every operator-reachable entry point carries
+      // a channel identity instead (GitHub dispatch and mention:
+      // channel:github; the eve route and the dev TUI behind it:
+      // channel:eve), and a channel schedule stamps a scheduleId, so those
+      // fields together are the machine-versus-conversation boundary: no
+      // channel identity, no record.
+      event.parentLineage === undefined &&
+      (event.channelType !== undefined ||
+        event.channelKind !== undefined ||
+        event.scheduleId !== undefined)
         ? track(event.sessionId, (record) => {
             record.channel ??= event.channelType ?? event.channelKind ?? null;
             if (record.title === null && typeof event.title === "string") {
