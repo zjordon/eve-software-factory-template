@@ -1,0 +1,231 @@
+{
+  "status": "complete",
+  "llm": {
+    "model": "glm-5.3"
+  },
+  "message": "Review complete: 2 finding(s) across 7 selected item(s).",
+  "summary": {
+    "files_reviewed": 7,
+    "comments": 2,
+    "total_tokens": 1157500,
+    "input_tokens": 1057815,
+    "output_tokens": 99685,
+    "cache_read_tokens": 663616,
+    "elapsed": "20m13s"
+  },
+  "tool_calls": {
+    "total": 68,
+    "by_tool": {
+      "code_comment": 2,
+      "code_search": 36,
+      "file_find": 10,
+      "file_read": 19,
+      "file_read_diff": 1
+    },
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [
+    {
+      "path": "agent/channels/dashboard.ts",
+      "content": "The `renderDetail` innerHTML assignment embedded in the `runPanelPage` template literal contains four JavaScript syntax errors in the served `\u003cscript\u003e` — they break the entire panel page. Failure scenario: operator opens `/runs/ui`, and because the whole panel is one classic `\u003cscript\u003e` block, a single SyntaxError prevents ALL of its code from executing — `route()`/`refreshList()` never run, so the page freezes at \"加载中…\" with an empty table; no list polling, no row navigation, no live stream. (TS/Biome can't catch this: the script is string content inside the template literal; it only fails in the browser.)\n\nBroken spots as served to the browser:\n1. `\"\u003cdiv class=\"kv\"\u003e\"` — the unescaped inner `\"` terminates the string literal early → SyntaxError.\n2. `.replace(/\u003c/div\u003e/g, \" · \")` — the unescaped `/` terminates the regex literal at `/\u003c` and the remainder fails to tokenize. Note: to serve `/\u003c\\/div\u003e/g` the TS template must contain `/\u003c\\\\/div\u003e/g`; a single `\\/` collapses to `/` during template-literal evaluation (the `\\\\n` idiom used in `liveLine` is the correct precedent).\n3. `...\u003ca href=\"\" + esc(r.prUrl) + \"\" target=\"_blank\" ...` — same unescaped-quote problem.\n4. `\"\u003cdiv style=\"margin-top:0.5rem\"\u003e...\"` — same problem; the neighbouring line already does this correctly with single quotes.\n\nFix: use single-quoted strings for these fragments (matching the style of the adjacent lines) and double the backslash in the closing-tag regex — see suggestion.",
+      "suggestion_code": "  $(\"detail\").innerHTML =\n    '\u003cdiv class=\"kv\"\u003e'\n    + \"\u003cdt\u003e线程\u003c/dt\u003e\u003cdd\u003e\" + threadCell(r).replace(/\u003cdiv\u003e/g, \"\").replace(/\u003c\\\\/div\u003e/g, \" · \") + \"\u003c/dd\u003e\"\n    + \"\u003cdt\u003e会话\u003c/dt\u003e\u003cdd\u003e\u003ccode\u003e\" + esc(r.sessionId) + \"\u003c/code\u003e\u003c/dd\u003e\"\n    + \"\u003cdt\u003e状态\u003c/dt\u003e\u003cdd\u003e\" + statusCell(r) + (r.terminal !== null ? \" · \" + clock(r.terminal.at) : \"\") + \"\u003c/dd\u003e\"\n    + \"\u003cdt\u003e令牌\u003c/dt\u003e\u003cdd\u003e输入 \" + fmtTokens(r.modelUsage.inputTokens) + \" / 输出 \" + fmtTokens(r.modelUsage.outputTokens)\n      + \"（缓存读 \" + fmtTokens(r.modelUsage.cacheReadTokens) + \"，写 \" + fmtTokens(r.modelUsage.cacheWriteTokens) + \"，调用 \" + r.modelUsage.calls + \" 次）\u003c/dd\u003e\"\n    + \"\u003cdt\u003e轮\u003c/dt\u003e\u003cdd\u003e\" + r.turns.started + \" 轮，失败 \" + r.turns.failed + \"\u003c/dd\u003e\"\n    + (r.prUrl !== null ? '\u003cdt\u003ePR\u003c/dt\u003e\u003cdd\u003e\u003ca href=\"' + esc(r.prUrl) + '\" target=\"_blank\" rel=\"noopener\"\u003e' + esc(r.prUrl) + \"\u003c/a\u003e\u003c/dd\u003e\" : \"\")\n    + (run.zombie !== null ? \"\u003cdt\u003e僵尸\u003c/dt\u003e\u003cdd\u003e\u003cb\u003e\" + esc(run.zombie.type) + \"\u003c/b\u003e（\" + esc(run.zombie.detail) + \"，自 \" + esc(run.zombie.since) + \"）\u003c/dd\u003e\" : \"\")\n    + \"\u003c/div\u003e\"\n    + \"\u003chr\u003e\u003cdiv\u003e\u003cb\u003e站点时间线\u003c/b\u003e\u003c/div\u003e\" + stages\n    + '\u003cdiv style=\"margin-top:0.5rem\"\u003e\u003cb\u003e审批卡\u003c/b\u003e\u003c/div\u003e' + inputs\n    + (failures === \"\" ? \"\" : '\u003cdiv style=\"margin-top:0.5rem\"\u003e\u003cb\u003e失败轮\u003c/b\u003e\u003c/div\u003e' + failures);",
+      "existing_code": "  $(\"detail\").innerHTML =\n    \"\u003cdiv class=\"kv\"\u003e\"\n    + \"\u003cdt\u003e线程\u003c/dt\u003e\u003cdd\u003e\" + threadCell(r).replace(/\u003cdiv\u003e/g, \"\").replace(/\u003c/div\u003e/g, \" · \") + \"\u003c/dd\u003e\"\n    + \"\u003cdt\u003e会话\u003c/dt\u003e\u003cdd\u003e\u003ccode\u003e\" + esc(r.sessionId) + \"\u003c/code\u003e\u003c/dd\u003e\"\n    + \"\u003cdt\u003e状态\u003c/dt\u003e\u003cdd\u003e\" + statusCell(r) + (r.terminal !== null ? \" · \" + clock(r.terminal.at) : \"\") + \"\u003c/dd\u003e\"\n    + \"\u003cdt\u003e令牌\u003c/dt\u003e\u003cdd\u003e输入 \" + fmtTokens(r.modelUsage.inputTokens) + \" / 输出 \" + fmtTokens(r.modelUsage.outputTokens)\n      + \"（缓存读 \" + fmtTokens(r.modelUsage.cacheReadTokens) + \"，写 \" + fmtTokens(r.modelUsage.cacheWriteTokens) + \"，调用 \" + r.modelUsage.calls + \" 次）\u003c/dd\u003e\"\n    + \"\u003cdt\u003e轮\u003c/dt\u003e\u003cdd\u003e\" + r.turns.started + \" 轮，失败 \" + r.turns.failed + \"\u003c/dd\u003e\"\n    + (r.prUrl !== null ? \"\u003cdt\u003ePR\u003c/dt\u003e\u003cdd\u003e\u003ca href=\"\" + esc(r.prUrl) + \"\" target=\"_blank\" rel=\"noopener\"\u003e\" + esc(r.prUrl) + \"\u003c/a\u003e\u003c/dd\u003e\" : \"\")\n    + (run.zombie !== null ? \"\u003cdt\u003e僵尸\u003c/dt\u003e\u003cdd\u003e\u003cb\u003e\" + esc(run.zombie.type) + \"\u003c/b\u003e（\" + esc(run.zombie.detail) + \"，自 \" + esc(run.zombie.since) + \"）\u003c/dd\u003e\" : \"\")\n    + \"\u003c/div\u003e\"\n    + \"\u003chr\u003e\u003cdiv\u003e\u003cb\u003e站点时间线\u003c/b\u003e\u003c/div\u003e\" + stages\n    + \"\u003cdiv style=\"margin-top:0.5rem\"\u003e\u003cb\u003e审批卡\u003c/b\u003e\u003c/div\u003e\" + inputs\n    + (failures === \"\" ? \"\" : '\u003cdiv style=\"margin-top:0.5rem\"\u003e\u003cb\u003e失败轮\u003c/b\u003e\u003c/div\u003e' + failures);",
+      "start_line": 320,
+      "end_line": 333,
+      "thinking": "The github.ts changes look consistent with the stated framework contract. Points:\n\n1. `annotateRunThread` catches its own errors — good.\n2. The `\"action.result\"` handler: `data.result.kind === \"tool-result\"` — if `data.result` were undefined this would throw, but it's inside try/catch → swallowed. OK.\n3. `data` typed implicitly from the events map type — fine.\n\nOne consideration: In `annotateRunThread`, `intakeIssueNumber(ctx.session.auth.initiator)` — `ctx.session.auth` — is `initiator` possibly null? `intakeIssueNumber` accepts null. But is `ctx.session.auth` itself possibly undefined? `SessionContext.session.auth` — presumably always defined. Can't verify without dist. The whole thing is in try/catch anyway, so no crash. Per the strict user rules (only report things that break real execution), this is defensively fine.\n\nNow — a potentially real issue: the `\"action.result\"` handler references `data.result.kind` where `data` — per background fact #3, `action.completed/failed` don't carry name/callId. The event here is `action.result` which apparently carries `result` with kind/toolName/output. Can't verify without dist; the author states they checked against dist types, and the code typechecks (`pnpm validate` green per background). TS would catch a wrong property on a typed `data`. So fine.\n\nAnother check — `parseGithubThreadToken` number: `Number(\"01\")` = 1; fine.\n\nNow back to dashboard.ts. Key confirmed issue: the four syntax errors in the served `\u003cscript\u003e` at lines 321, 322, 328, 332. This kills the whole panel page (all JS in one script block; SyntaxError → nothing runs: no list load, no routing, no live stream). Failure scenario: operator opens `/runs/ui`, authenticates, page shows \"加载中…\" forever and an empty table; browser console shows SyntaxError. This is exactly a \"will fail on the real execution path\" bug.\n\nSeverity: critical (the entire feature — the run panel UI — is broken).\n\nHow to report: one comment on the `renderDetail` innerHTML block (or individual comments per line?). The tool matches `existing_code` — I can give one comment covering lines 320-333 block with all four spots, with a suggestion. Or separate comments per line for precision. I think one comment on the whole assignment is cleaner, listing all four fixes. But the tool pins to the exact code block; a single comment covering lines 320-333 requires existing_code to be those consecutive lines. They are consecutive (320-333). Let me craft the comment.\n\nWait — also double-check: is there possibly an issue that `esc(r.prUrl)` when inserted into `href=\"...\"` — esc escapes `\"` → `\u0026quot;`, fine.\n\nAlso note the intended fix for line 322: `.replace(/\u003c\\/div\u003e/g, \" · \")` — inside the TS template literal, `\\/` stays `\\/` (no escaping issues since backslash isn't special before `/` in template literal... actually in a template literal, `\\/` is just `/`? No wait — in a template literal, escape sequences: `\\/` is not a recognized escape; per spec, `\\/` in a string/template → `/`. Hmm, in JS string literals, unrecognized escapes like `\\/` yield the char itself, so `\\/` → `/`. That means in the TS template literal, writing `/\u003c\\/div\u003e/g` would serve `/\u003c\\/div\u003e/g`?? No wait — the template literal source `/\u003c\\/div\u003e/g` contains the two chars `\\` and `/`; in the template literal, `\\/` is an escape sequence that evaluates to `/` — so the SERVED text would be `/\u003c\\/div\u003e/g` → no wait.\n\nUgh, let me redo this. The TS file contains a template literal. Its raw source characters between backticks are processed with escape-sequence rules when computing the string value. If the source contains the characters `\\` `/`, the escape `\\/` evaluates to `/` (backslash dropped). So the served HTML would contain `/\u003c\\/div\u003e/g` → NO — served HTML would contain `/\u003c` then `/` then `div\u003e/g`... i.e., `/` + `/` = the backslash disappears!\n\nHold on, that contradicts what I observed with `\\\\n`: source `\"...\\\\n\"` — two backslashes + n. Escape `\\\\` → `\\`, then `n` is literal → served `\\n` (backslash + n). Yes. So to serve a single backslash, the template must contain two. Therefore the fixed regex in the served JS must be `/\u003c\\/div\u003e/g` (one backslash), which requires the template source to write `/\u003c\\\\/div\u003e/g` (two backslashes).\n\nInteresting — so even the author's other single-quoted line 333 `'\u003cdiv style=\"margin-top:0.5rem\"\u003e...'` is fine (no backslash involved). And for the suggestion I must remember: within the TS template literal, write `/\u003c\\\\/div\u003e/g` to serve `/\u003c\\/div\u003e/g`.\n\nHmm wait, actually also — do they even need the regex? `threadCell(r).replace(/\u003cdiv\u003e/g, \"\").replace(/\u003c\\/div\u003e/g, \" · \")` converts `\u003cdiv\u003eA\u003c/div\u003e\u003cdiv class=\"muted\"\u003eB\u003c/div\u003e` into `A · B`. Yes regex needed for the closing tag.\n\nAlternatively simpler suggestion: change `threadCell` usage — but minimal fix: escape quotes properly.\n\nNow, are there any other real issues worth reporting under the strict rules?\n\nLet me scan the remaining items:\n\ndashboard.ts routes:\n- All 4 routes call `unauthorized()` first. ✓ Basic auth. `GET /runs/ui` protected ✓.\n- `/run/:id/stream`: catches everything → 404. Fine.\n- Content-Type headers set ✓. `Response.json` default 200 ✓.\n\n`leanRecord` strips seenKeys ✓ matches RunRecord.\n\n`dailyTotals(summaries.map((summary) =\u003e summary.record))` — totals derived from the 50 newest records only; panel labels \"近 N 天\" — a scope choice, not a failure.\n\ngithub.ts:\n- Handlers never await anything that can reject outward: `annotateRunThread` catches; the action.result PR extraction try/catch. But note: `\"action.result\"` handler awaits `annotateRunThread` then its own try/catch — the outer function can't throw. ✓.\n- What if `annotateRun` rejects? It internally catches (run-store line 335-340), so no.\n\neve.ts: pure refactor, imports `operatorRouteAuth` from lib/route-auth.js which exports it ✓. Behavior identical (basicUser + localDevUser) ✓. No issues.\n\nPanel JS other potential runtime errors:\n- `renderList` — `run.record.thread.number` etc. all nullable-checked. `record.title ?? record.sessionId.slice(0,12)` — sessionId always string ✓.\n- `stageMarks` — inline `style=\"...background-color:inherit\"` — display nit.\n- `followLive` fetch options: `accept` as top-level key is ignored (invalid RequestInit member). Harmless — the server doesn't gate on Accept. Under strict rules, not a failure. Skip? It doesn't break anything. Right, skip.\n- `route()` — `decodeURIComponent(location.hash...)` — if hash contains invalid percent escape, decodeURIComponent throws → route() throws → script dies at initial call? `route()` is called at line 450 top-level. If someone navigates with a malformed hash (e.g., `#abc%`), decodeURIComponent throws URIError, the hashchange listener throws, and the initial `route()` call... initial location.hash comes from user navigation. A malformed hash like `#%zz` → decodeURIComponent throws → uncaught error in hashchange handler; list view stays as-is. Impact: minor, only with malformed hash; the initial route() at load would throw, meaning refreshList() and setInterval never run (they're after route() call at lines 450-452!). Wait — line 450: `route();` line 451 `refreshList();` line 452 `setInterval(...)`. If `route()` throws on initial load (malformed hash), `refreshList()` never runs → page stuck at \"加载中…\". But that requires the operator to hand-craft a malformed hash. Hmm — realistic? `location.hash` set by clicking rows uses raw sessionIds (safe chars). Not a realistic failure path; also all this is dead code until the syntax errors are fixed anyway. Skip per \"宁可零意见\".\n\nHmm wait, actually — one more important check on the syntax errors: is it possible the browser tolerates any of this? No — SyntaxError in a classic script aborts the entire script block. Definite.\n\nLet me also double check there are no other unescaped-quote bugs elsewhere in the served script that I might have missed. From the two reads (150-299 and 300-455), plus the diff for 1-150 (TS code + CSS/HTML — CSS/HTML not JS), the JS is lines 199-452. I reviewed:\n- 199-254 ✓ (esc uses single-quoted outer? `const esc = (value) =\u003e String(value ?? \"\").replace(/[\u0026\u003c\u003e\"']/g, (c) =\u003e ({ \"\u0026\": \"\u0026amp;\", ... '\"': \"\u0026quot;\", \"'\": \"\u0026#39;\" })[c]);` — outer double-quoted strings containing only safe chars: `\"\u0026amp;\"` etc. The keys `'\"'` and `\"'\"` are single-quoted containing a double quote — fine. `\"[\u0026\u003c\u003e\\\"'\"]`... wait: `/[\u0026\u003c\u003e\"']/g` — regex char class contains `\"` and `'` — fine in regex literal, no escaping needed. ✓\n- 203-211 ✓\n- 213-227 stageMarks: line 225 outer single quotes with inner `\"` attrs — contains `'\" class=\"dot '` — single-quoted string containing double quotes ✓. Also `style=\"display:inline-block;...\"` inside single-quoted ✓.\n- 228-245 ✓\n- 247-295 renderList ✓ (checked above)\n- 297-303 ✓\n- 305-334 renderDetail — the four broken lines.\n- 336-342 liveLine — `\"\\\\n\"` serves `\\n` ✓\n- 344-365 ✓\n- 367-427 followLive — `\"\\\\n\"` ✓, `String(error).replace(/\\\\n/g, \" \")` serves `/\\n/g` regex ✓\n- 429-452 ✓\n\nSo exactly lines 321, 322, 328, 332. All four are in the single expression statement spanning 320-333.\n\nAlso line 328 has a second latent issue even after quote-fixing intent: `href=\"\"` + esc + `\"\"` — the intended output is `href=\"...\"`. With proper escaping it becomes `href=\"'`... whatever — the suggestion will fix it coherently.\n\nNow — should this be 1 comment or 4? The user rules want concrete failure scenarios. One comment on the block with all four lines enumerated is clearest. The code_comment tool pins via existing_code — I'll use the full statement block (lines 320-333) as existing_code. That's 14 lines — acceptable.\n\nActually, maybe better to split into per-line comments for precise pinning? The tool says existing_code should be \"one or several consecutive lines\". One comment with the whole block is fine, and arguably clearer since it's one root cause (unescaped `\"` / `/` in JS embedded in the TS template literal).\n\nSuggestion code — rewrite the statement with properly escaped strings. Inside the TS template literal, for the served JS:\n\n```js\n  $(\"detail\").innerHTML =\n    '\u003cdiv class=\"kv\"\u003e'\n    + \"\u003cdt\u003e线程\u003c/dt\u003e\u003cdd\u003e\" + threadCell(r).replace(/\u003cdiv\u003e/g, \"\").replace(/\u003c\\/div\u003e/g, \" · \") + \"\u003c/dd\u003e\"\n    + \"\u003cdt\u003e会话\u003c/dt\u003e\u003cdd\u003e\u003ccode\u003e\" + esc(r.sessionId) + \"\u003c/code\u003e\u003c/dd\u003e\"\n    + \"\u003cdt\u003e状态\u003c/dt\u003e\u003cdd\u003e\" + statusCell(r) + (r.terminal !== null ? \" · \" + clock(r.terminal.at) : \"\") + \"\u003c/dd\u003e\"\n    + \"\u003cdt\u003e令牌\u003c/dt\u003e\u003cdd\u003e输入 \" + fmtTokens(r.modelUsage.inputTokens) + \" / 输出 \" + fmtTokens(r.modelUsage.outputTokens)\n      + \"（缓存读 \" + fmtTokens(r.modelUsage.cacheReadTokens) + \"，写 \" + fmtTokens(r.modelUsage.cacheWriteTokens) + \"，调用 \" + r.modelUsage.calls + \" 次）\u003c/dd\u003e\"\n    + \"\u003cdt\u003e轮\u003c/dt\u003e\u003cdd\u003e\" + r.turns.started + \" 轮，失败 \" + r.turns.failed + \"\u003c/dd\u003e\"\n    + (r.prUrl !== null ? '\u003cdt\u003ePR\u003c/dt\u003e\u003cdd\u003e\u003ca href=\"' + esc(r.prUrl) + '\" target=\"_blank\" rel=\"noopener\"\u003e' + esc(r.prUrl) + \"\u003c/a\u003e\u003c/dd\u003e\" : \"\")\n    + (run.zombie !== null ? \"\u003cdt\u003e僵尸\u003c/dt\u003e\u003cdd\u003e\u003cb\u003e\" + esc(run.zombie.type) + \"\u003c/b\u003e（\" + esc(run.zombie.detail) + \"，自 \" + esc(run.zombie.since) + \"）\u003c/dd\u003e\" : \"\")\n    + \"\u003c/div\u003e\"\n    + \"\u003chr\u003e\u003cdiv\u003e\u003cb\u003e站点时间线\u003c/b\u003e\u003c/div\u003e\" + stages\n    + '\u003cdiv style=\"margin-top:0.5rem\"\u003e\u003cb\u003e审批卡\u003c/b\u003e\u003c/div\u003e' + inputs\n    + (failures === \"\" ? \"\" : '\u003cdiv style=\"margin-top:0.5rem\"\u003e\u003cb\u003e失败轮\u003c/b\u003e\u003c/div\u003e' + failures);\n```\n\nStrategy: switch the offending outer quotes to single quotes (matching the style already used on line 333), and for the closing-tag regex use `/\u003c\\/div\u003e/g` — but remember the template-literal escaping: in the TS source, `\\/` collapses to `/` when the template literal is evaluated! Wait, does it?\n\nLet me be careful: Template literal escape sequences follow StringLiteral rules: `\\` followed by a char. `\\/` — is that a valid escape? In StringLiteral, LineContinuation, `\\'`, `\\\"`, `\\\\`, `\\`` , `\\b\\f\\n\\r\\t\\v`, `\\0`, `\\xHH`, `\\uHHHH`, `\\u{...}`, and (in non-strict... no—) for any other char, NotEscapeSequence? Actually: in ES spec, NonEscapeCharacter — `\\` followed by a character that's not one of the special ones yields that character itself (this is LegacyOctal-independent; `\\q` → `q`). So `\\/` → `/`. The backslash is CONSUMED.\n\nSo if I write `/\u003c\\/div\u003e/g` in the TS template literal source, the served HTML contains `/\u003c\\/div\u003e/g` → NO: served contains `/\u003c` + `/div\u003e/g`? The two source chars `\\` `/` evaluate to one char `/`. So served = `//div\u003e/g`?? No wait: source `/\u003c\\/div\u003e/g` chars: `/`,`\u003c`,`\\`,`/`,`d`,`i`,`v`,`\u003e`,`/`,`g`. The `\\` + `/` → `/`. So evaluated: `/`,`\u003c`,`/`,`d`,`i`,`v`,`\u003e`,`/`,`g` = `/\u003c/div\u003e/g` — the exact broken thing we have now! Ha — that explains the bug's origin: the author (or a formatter) wrote `/\u003c\\/div\u003e/g` in the template, and the backslash vanished when the template was evaluated, leaving `/\u003c/div\u003e/g` in the served HTML!\n\nWait, no — the file content at line 322 is `.replace(/\u003c/div\u003e/g, \" · \")` — the FILE (TS source) contains `/\u003c/div\u003e/g` with no backslash. So the source itself lacks the backslash. Whatever the cause, to serve `/\u003c\\/div\u003e/g` (valid JS regex for `\u003c/div\u003e`), the template source must contain `/\u003c\\\\/div\u003e/g` (double backslash) — exactly like the `\\\\n` idiom used in liveLine.\n\nHmm, actually wait, do we even need the backslash in the served regex? `/\u003c\\/div\u003e/g` — in a regex literal, the `/` in the pattern must be escaped (`\\/`) or it terminates the literal. Yes, mandatory. So served must be `/\u003c\\/div\u003e/g`, source must be `/\u003c\\\\/div\u003e/g`.\n\nSo in my suggestion_code I must write `/\u003c\\\\/div\u003e/g` in the TS source. Critical detail.\n\nSimilarly, the quotes: using single-quoted outer strings avoids backslash issues entirely.\n\nLet me now also double-check the alternative for line 321 etc. — single quotes work: `'\u003cdiv class=\"kv\"\u003e'` ✓.\n\nLine 328 fix: `'\u003cdt\u003ePR\u003c/dt\u003e\u003cdd\u003e\u003ca href=\"' + esc(r.prUrl) + '\" target=\"_blank\" rel=\"noopener\"\u003e' + esc(r.prUrl) + \"\u003c/a\u003e\u003c/dd\u003e\"` ✓.\n\nLine 332 fix: `'\u003cdiv style=\"margin-top:0.5rem\"\u003e\u003cb\u003e审批卡\u003c/b\u003e\u003c/div\u003e'` ✓.\n\nGood. Also, while I'm at it — should I double-check whether TS/Biome accepted line 322's `/\u003c/div\u003e/g`? In TS source it's inside a template literal (string) — yes, no parsing. ✓ consistent.\n\nNow, anything else that meets the \"must fix\" bar?\n\nLet me reconsider the github.ts `events` map: keys \"actions.requested\", \"session.completed\", \"session.waiting\", \"turn.completed\", \"action.result\" — per background fact #1/#2, turn.* terminal events lack rootSessionId and instrumentation filters child sessions via onlyIfExists — but that's instrumentation, not the channel. In the channel, `ctx.session.id` is the session the event fired in. For child (station) sessions... do channel events fire for child sessions? The GitHub channel is attached to the root session. Background says these fire \"within the session's context\". `annotateRun(ctx.session.id, ...)` — if the event fired for a child session, it would annotate the child's session id, creating a stray record with no session.started... Actually would it create a record? annotateRun → readRecord ?? freshRecord → writes a fresh record for the child id. Hmm — that could create orphan run records for station sessions. But: does the GitHub channel's events fire for subagent sessions at all? Unknown without dist. The run-panel doc says child sessions merge into root via scope.rootSessionId in instrumentation. For channel events, the channel is per-thread; continuation tokens... I can't verify. The background says they verified the shapes against dist types and tested end-to-end (\"会话产生完整记录\" and kill -9 replay without duplicate counts). If orphan child records were created, they'd show in the panel as runs with no stages... The author tested. I can't establish a concrete failure scenario without framework knowledge; per the rules (\"给不出失效场景的发现不要输出\"), skip.\n\nAlso check: `\"action.result\"` fires for every tool result — `annotateRunThread` runs on every action result; annotateRun enqueues a write per event... performance: enqueue serializes; each annotateRun rewrites the whole JSON file. Every tool call → 2 file writes (annotate + upsert from instrumentation... well instrumentation is a different path). For a busy factory this is IO churn but not a failure. It's a perf consideration; the background frames run-store as accepted design (per-session promise chain, atomic writes). Not report-worthy under the strict bar? \"Performance\" issues that \"会在真实执行路径上失败\" — no failure. Skip.\n\nOne more possible issue in dashboard.ts: `GET(\"/runs\")` — `listRuns(50)` triggers sweepExpired at most hourly — fine.\n\n`unauthorized()` helper — `routeAuth` import from \"eve/channels/auth\": verify this export exists. The old eve.ts comment referenced `routeAuth`'s 401 fallback behavior, implying it exists in the framework. eve.ts previously didn't import routeAuth (the channel applies auth itself). dashboard.ts calls `routeAuth(request, operatorRouteAuth)` directly. Can't check dist... but background says `routeAuth` walk is the intended pattern and 401+challenge was tested. OK.\n\nStream route — `attachSession(params.id)` — background: attachSession(id).getEventStream({startIndex:-1}). Tested. OK.\n\nNow, also check eve.ts diff itself for anything: it's a clean extraction; `operatorRouteAuth` exported ✓; eveChannel({ auth: operatorRouteAuth }) — same as before ([basicUser, localDevUser]). ✓ No issue.\n\nLet me also quickly verify the top of dashboard.ts (lines 1-150) raw, to make sure the TS portion matches the diff and there are no other issues (imports, unauthorized helper). The diff showed it; the file is 456 lines (diff said 455, close enough — maybe off-by-one counting). Let me read 1-60 to double check imports compile-wise: `routeAuth` from \"eve/channels/auth\" — if this named export doesn't exist, build fails; but they said validate green. Fine, skip re-reading.\n\nHmm, wait — one more thing to double check on line 322 even post-fix: `threadCell(r).replace(/\u003cdiv\u003e/g, \"\").replace(/\u003c\\/div\u003e/g, \" · \")` — threadCell returns `\u003cdiv\u003eA\u003c/div\u003e\u003cdiv class=\"muted\"\u003eB\u003c/div\u003e`. After replaces: `A · B`. ✓ intended.\n\nAnd line 328's `href` — esc() escapes `\"` so attribute-safe ✓.\n\nNow, is there any chance I'm wrong that a SyntaxError in a `\u003cscript\u003e` block kills all its code? Yes — classic scripts are parsed wholly; any SyntaxError → none of the script executes. Definitely.\n\nAnd the failure scenario concretely: GET /runs/ui returns this HTML; browser console: \"Uncaught SyntaxError: Invalid or unexpected token\" (at line ~321). Page: header \"加载中…\" forever, empty table, detail view hidden, no polling. The entire M5 panel UI is non-functional. Critical.\n\nReport as ONE code_comment (category bug, severity critical) pinned to lines 320-333 block. Include suggestion_code with fixed lines. In suggestion code, remember the double-backslash for the regex and single-quote strategy.\n\nWait — one subtlety about suggestion_code and `existing_code`: these lines live inside the template literal; the diff lines shown begin with `+`. The existing_code must match the diff text format (without the `+` prefix presumably — \"Maintain consistent style with diff code\"). I'll provide the exact file lines 320-333.\n\nLet me construct existing_code exactly as in the file:\n\n```\n  $(\"detail\").innerHTML =\n    \"\u003cdiv class=\"kv\"\u003e\"\n    + \"\u003cdt\u003e线程\u003c/dt\u003e\u003cdd\u003e\" + threadCell(r).replace(/\u003cdiv\u003e/g, \"\").replace(/\u003c/div\u003e/g, \" · \") + \"\u003c/dd\u003e\"\n    + \"\u003cdt\u003e会话\u003c/dt\u003e\u003cdd\u003e\u003ccode\u003e\" + esc(r.sessionId) + \"\u003c/code\u003e\u003c/dd\u003e\"\n    + \"\u003cdt\u003e状态\u003c/dt\u003e\u003cdd\u003e\" + statusCell(r) + (r.terminal !== null ? \" · \" + clock(r.terminal.at) : \"\") + \"\u003c/dd\u003e\"\n    + \"\u003cdt\u003e令牌\u003c/dt\u003e\u003cdd\u003e输入 \" + fmtTokens(r.modelUsage.inputTokens) + \" / 输出 \" + fmtTokens(r.modelUsage.outputTokens)\n      + \"（缓存读 \" + fmtTokens(r.modelUsage.cacheReadTokens) + \"，写 \" + fmtTokens(r.modelUsage.cacheWriteTokens) + \"，调用 \" + r.modelUsage.calls + \" 次）\u003c/dd\u003e\"\n    + \"\u003cdt\u003e轮\u003c/dt\u003e\u003cdd\u003e\" + r.turns.started + \" 轮，失败 \" + r.turns.failed + \"\u003c/dd\u003e\"\n    + (r.prUrl !== null ? \"\u003cdt\u003ePR\u003c/dt\u003e\u003cdd\u003e\u003ca href=\"\" + esc(r.prUrl) + \"\" target=\"_blank\" rel=\"noopener\"\u003e\" + esc(r.prUrl) + \"\u003c/a\u003e\u003c/dd\u003e\" : \"\")\n    + (run.zombie !== null ? \"\u003cdt\u003e僵尸\u003c/dt\u003e\u003cdd\u003e\u003cb\u003e\" + esc(run.zombie.type) + \"\u003c/b\u003e（\" + esc(run.zombie.detail) + \"，自 \" + esc(run.zombie.since) + \"）\u003c/dd\u003e\" : \"\")\n    + \"\u003c/div\u003e\"\n    + \"\u003chr\u003e\u003cdiv\u003e\u003cb\u003e站点时间线\u003c/b\u003e\u003c/div\u003e\" + stages\n    + \"\u003cdiv style=\"margin-top:0.5rem\"\u003e\u003cb\u003e审批卡\u003c/b\u003e\u003c/div\u003e\" + inputs\n    + (failures === \"\" ? \"\" : '\u003cdiv style=\"margin-top:0.5rem\"\u003e\u003cb\u003e失败轮\u003c/b\u003e\u003c/div\u003e' + failures);\n```\n\nThat's lines 320-333. 14 lines. OK.\n\nHmm — but wait, maybe I should double check the tool's sliding-window matching against the diff. The diff for dashboard.ts is the whole file as added lines. Lines 320-333 appear with `+` prefix in the diff. The existing_code I provide should match the file content (without `+`). Fine.\n\nShould I split into 2 comments — one for the block? I'll do one comment. Actually, let me reconsider: maybe pin more precisely with 2 comments: (1) line 321/322 area, (2) line 328/332. But one comment describing all four spots with a full corrected block is more actionable. The tool allows multiple comments per call; I'll do one comprehensive comment.\n\nContent (in English, per instructions \"Always respond in English\"):\n\n\"The `\u003cscript\u003e` block embedded in the `runPanelPage` template literal contains four JavaScript syntax errors, which break the entire panel page. Because all panel JS lives in one classic `\u003cscript\u003e` block, a single SyntaxError prevents any of it from executing: opening `/runs/ui` renders a static '加载中…' header and an empty table forever — no list refresh, no row navigation, no live stream.\n\nBroken spots (as served to the browser):\n1. `\"\u003cdiv class=\"kv\"\u003e\"` — unescaped `\"` terminates the string literal early → SyntaxError.\n2. `.replace(/\u003c/div\u003e/g, \" · \")` — the `/` inside the regex body isn't escaped, so the literal terminates at `/\u003c` and the rest fails to tokenize. Note that to serve `/\u003c\\/div\u003e/g` the template literal must contain `/\u003c\\\\/div\u003e/g` (a single `\\/` collapses to `/` at template evaluation — likely how this regressed).\n3. `... \u003ca href=\"\" + esc(r.prUrl) + \"\" target=\"_blank\" ...` — same unescaped-quote problem.\n4. `\"\u003cdiv style=\"margin-top:0.5rem\"\u003e...\"` — same unescaped-quote problem (line 333 does it correctly with single quotes).\n\nFix: use single-quoted strings for these fragments (as the neighbouring lines already do) and double the backslash in the closing-tag regex.\"\n\nSuggestion code as above.\n\nCategory: bug; severity: critical.\n\nPath: agent/channels/dashboard.ts.\n\nNow let me also decide on `followLive`'s `accept` top-level fetch option — invalid but harmless (ignored). Not report per rules.\n\nOne more sweep for \"must-fix\" candidates:\n\n1. XSS: `row.dataset.id` — set from escaped sessionId... `data-id=\"' + esc(r.sessionId) + '\"` ✓. `location.hash = row.dataset.id` → then `decodeURIComponent` — fine.\n2. `renderList` reattaches click listeners each refresh ✓ (innerHTML replaced).\n3. `setInterval` for refreshList keeps running always but guarded by `selected === null` — after navigating to detail, list stops refreshing; back → resumes. Fine.\n4. Memory: followLive fallback pollTimer leak — when stream ends while still selected: `if (fellBack || selected === id)` → pollOnce → sets pollTimer if not terminal — this is intended (\"结束后，10 秒一档跟进直到终态\"). When run reaches terminal → cleared. When user navigates away → route() clears. OK.\n5. Double `followLive` invocation? `.then((run) =\u003e { renderDetail(run); followLive(id); })` — only once per route. OK.\n6. github.ts: `\"action.result\"` handler awaits annotateRunThread (thread annotation) even on non-PR actions — idempotent. OK.\n\nAlso — `extractPullRequestUrl` bound: 64 nodes, but note `seen.push(...value.slice(0, 16))` — spread of ≤16 items; total seen grows bounded by visited\u003c64 loop... `seen.length` can grow beyond 64 but loop stops at 64. Fine.\n\n`PULL_REQUEST_URL_PATTERN` — `^https://[^\\s/]+/[^\\s/]+/[^\\s/]+/pull/\\d+$` — matches `https://github.com/owner/repo/pull/123` ✓. Fine.\n\nNow finalize: one critical comment on dashboard.ts. Then task_done.\n\nWait — also double-check the eve.ts and github.ts files get \"their own pass\" per instructions:\n- eve.ts: reviewed — extraction is faithful; route-auth.ts (context) confirms identical behavior; exports exist; no issues to report.\n- github.ts: reviewed fully — no must-fix issues found beyond what's noted.\n- dashboard.ts: routes fine; the inline script has the critical bug.\n\nAlso — should I double check `defineChannel` / `GET` / route context `attachSession` from \"eve/channels\"? Not indexable; trust background + validate green.\n\nOne more consideration on dashboard.ts line 338-340 `\\\\n`: served `\\n` correct ✓ (contrast with my regex point — the author knows the `\\\\` idiom, which further suggests lines 321-332 are oversights).\n\nLet me also double check that line 322's first replace `/\u003cdiv\u003e/g` is valid: pattern `\u003cdiv\u003e` — no `/` inside... wait, `\u003cdiv\u003e` has no slash. ✓ valid regex. Only `\u003c/div\u003e` needs the escape.\n\nOK, ready to file the comment. Also verify exact characters for existing_code — copy from file read output lines 320-333 verbatim.\n\nOne thing: the file_read output shows line 322 as:\n`    + \"\u003cdt\u003e线程\u003c/dt\u003e\u003cdd\u003e\" + threadCell(r).replace(/\u003cdiv\u003e/g, \"\").replace(/\u003c/div\u003e/g, \" · \") + \"\u003c/dd\u003e\"`\n\nI'll reproduce exactly.",
+      "category": "bug",
+      "severity": "critical"
+    },
+    {
+      "path": "agent/instrumentation/runs.ts",
+      "content": "The pruning math is inverted: `resolved.slice(keep)` with a positive `keep` drops the oldest `keep` entries and keeps only `resolved.length - keep`, rather than keeping the newest `keep` resolved entries. Concrete failure: a run accumulates 50 resolved approval cards, then a 51st (open) request arrives → `keep = 50 - 1 = 49` → `resolved.slice(49)` keeps only 1 resolved entry → the list collapses from 51 to 2 entries, silently discarding 49 resolved approval-card history entries, and this repeats each time the cap is exceeded. Secondary case: when `open.length \u003e CAP`, `keep ≤ 0` and `Math.max(keep, 0) = 0` makes `slice(0)` retain all resolved entries, so the list stays over the cap. Fix by dropping exactly the overflow from the oldest resolved entries.",
+      "suggestion_code": "              if (record.inputRequests.length \u003e INPUT_REQUESTS_CAP) {\n                const drop = Math.min(\n                  resolved.length,\n                  record.inputRequests.length - INPUT_REQUESTS_CAP\n                );\n                record.inputRequests = [...resolved.slice(drop), ...open];\n              }",
+      "existing_code": "              if (record.inputRequests.length \u003e INPUT_REQUESTS_CAP) {\n                const keep = INPUT_REQUESTS_CAP - open.length;\n                record.inputRequests = [\n                  ...resolved.slice(Math.max(keep, 0)),\n                  ...open,\n                ];\n              }",
+      "start_line": 227,
+      "end_line": 233,
+      "thinking": "Confirmed. `resolved.slice(keep)` with positive `keep` returns entries from index `keep` onward — i.e., it keeps `resolved.length - keep` entries and drops the oldest `keep`. The intent (per the comment \"Prune oldest resolved entries when over cap\") is to keep the newest `keep` resolved entries.\n\nConcrete failure: 50 resolved requests + 1 new open → total 51 \u003e 50 → keep = 50 - 1 = 49 → `resolved.slice(49)` keeps only 1 resolved entry → list collapses to 2 entries, silently discarding 49 resolved approval-card history entries. This repeats every time the cap is exceeded.\n\nSecondary: when `open.length \u003e CAP`, keep ≤ 0 → `Math.max(keep, 0)` = 0 → `slice(0)` keeps ALL resolved, so the list exceeds the cap (all open retained by design is fine, but resolved should be dropped entirely).\n\nFix: drop exactly the overflow from the oldest resolved entries:\n\n```ts\nif (record.inputRequests.length \u003e INPUT_REQUESTS_CAP) {\n  const drop = Math.min(\n    resolved.length,\n    record.inputRequests.length - INPUT_REQUESTS_CAP\n  );\n  record.inputRequests = [...resolved.slice(drop), ...open];\n}\n```\n\nThis is a genuine correctness defect (silent data loss in the record's ring buffer, violating the documented cap semantics). Report it as bug/medium.\n\nEverything else I examined held up:\n- Dedupe/writeIf/seenKeys ordering is correct (mutations discarded when the write is skipped).\n- Atomic tmp+rename writes, per-session serialization chain never poisons.\n- Path traversal guarded by SESSION_ID_PATTERN + prefix check; tmp files excluded from recordIds.\n- Stage cap splice drops the oldest closed stage — correct.\n- Root/child attribution (rootOf/isRootScope/onlyIfExists filters) matches the documented eve event contracts (author verified against dist types and live runs).\n- Zombie detection semantics match the spec (approval-hang non-terminal only; error-loop by streak).\n- Sweep only deletes terminal records; corrupt-read failures are caught; storage errors are swallowed per the observability side-channel posture.\n\nOne comment, then task_done.",
+      "category": "bug",
+      "severity": "medium"
+    }
+  ],
+  "groups": [
+    {
+      "label": "Agent channels: new dashboard channel with eve/github channel updates",
+      "files": [
+        "agent/channels/dashboard.ts",
+        "agent/channels/eve.ts",
+        "agent/channels/github.ts"
+      ]
+    },
+    {
+      "label": "Run instrumentation and observability run store",
+      "files": [
+        "agent/instrumentation/runs.ts",
+        "agent/lib/observability/run-store.ts"
+      ]
+    },
+    {
+      "label": "Route authentication helper",
+      "files": ["agent/lib/route-auth.ts"]
+    },
+    {
+      "label": "Factory data backup script",
+      "files": ["scripts/backup-factory-data.sh"]
+    }
+  ],
+  "session_id": "570c735f-5c67-4b66-81f6-45b04d16076c",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "570c735f-5c67-4b66-81f6-45b04d16076c",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "eec21556473e2f3b36dfc7a5da93b713cc2717fe29ff2ad405efec95ef03b192"
+    },
+    "input": {
+      "mode": "range",
+      "requested_from": "main",
+      "requested_head": "feat/m5-observability",
+      "resolved_base": "8fe812e2b493964459e7c08ee359184372b1a37c",
+      "resolved_head": "83b918c769fa7b4ea835fc079ab2af14b547750d",
+      "exact_range": "8fe812e2b493964459e7c08ee359184372b1a37c..83b918c769fa7b4ea835fc079ab2af14b547750d",
+      "source_artifact_sha256": "a7e52d510a5234fc70f4d542f8302367fcf123921ac49d33a74fd7cf598b2058"
+    },
+    "execution": {
+      "ocr_version": "v1.13.3",
+      "model": "glm-5.3",
+      "configured_concurrency": 8,
+      "rule_config_sha256": "aec8b9c66d91058e45e329dd68d74d645753d14731850de0fb7c7c854f533602",
+      "runtime_config_sha256": "d82c4b9be9df12c9a549d237bc74133f0fb6c4198a31e53dc5bd1ac7eb20251f"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "114ea3af554ffc58a5d5c4fb481beb0aee2f8ef23c7a919e9636cb01eabc6800",
+          "path": "agent/instrumentation/runs.ts",
+          "fingerprint": "e65d3006c0e3cf8c9618a17392b98f16d0b3f5167a81b7663591f1bcd435841a"
+        },
+        {
+          "item_id": "13d42507d6b88737ac7476d59253ea5f10503ac3f70af199c8b395607d6fab85",
+          "path": "agent/lib/route-auth.ts",
+          "fingerprint": "40090cbeccc48a2961fa50f26d06a29c5893ffa83e7c950d425814e0850385d9"
+        },
+        {
+          "item_id": "5aa37007b558ed80b9b8c51fef88af8e698bde194c4979cfbcb11df2e60e238f",
+          "path": "scripts/backup-factory-data.sh",
+          "fingerprint": "e3bdbb68e16d7d6e08af103bf8911862dd330f17558d7b1594b61ac5468b7106"
+        },
+        {
+          "item_id": "8892145b2419140bd89f0d609c5ad71b9b5d7bd795805ab0f63135c7312e30bd",
+          "path": "agent/channels/github.ts",
+          "fingerprint": "13a70bb787d248021561851ed6cab5a47cdc241ad1a1011a5b9be377667c1b95"
+        },
+        {
+          "item_id": "934e55cbb73c599119352adec93463cc3c64de021ac3a48315fb14d4bb8393d0",
+          "path": "agent/channels/eve.ts",
+          "fingerprint": "07793183867906211aff7fee0e5b8d2a832e48f11c60669ef07955f9f013abb2"
+        },
+        {
+          "item_id": "b1ca151b709b3e2830abbca85a48f202012f0b2bf87fb8212e87e3efacb03727",
+          "path": "agent/channels/dashboard.ts",
+          "fingerprint": "854fb0413656ee643f33861f8fdb70032ea9462611494a0f8b72b35054e36310"
+        },
+        {
+          "item_id": "c1b8412a4fd29ea60d9f4e84641afe6715c8c93cfe448d6af3478961fc2982f5",
+          "path": "agent/lib/observability/run-store.ts",
+          "fingerprint": "58890b1718e4e2465c49ada89a54fff0eed69ec740666831023cec0d1f3106f6"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "114ea3af554ffc58a5d5c4fb481beb0aee2f8ef23c7a919e9636cb01eabc6800",
+          "path": "agent/instrumentation/runs.ts",
+          "fingerprint": "e65d3006c0e3cf8c9618a17392b98f16d0b3f5167a81b7663591f1bcd435841a"
+        },
+        {
+          "item_id": "13d42507d6b88737ac7476d59253ea5f10503ac3f70af199c8b395607d6fab85",
+          "path": "agent/lib/route-auth.ts",
+          "fingerprint": "40090cbeccc48a2961fa50f26d06a29c5893ffa83e7c950d425814e0850385d9"
+        },
+        {
+          "item_id": "5aa37007b558ed80b9b8c51fef88af8e698bde194c4979cfbcb11df2e60e238f",
+          "path": "scripts/backup-factory-data.sh",
+          "fingerprint": "e3bdbb68e16d7d6e08af103bf8911862dd330f17558d7b1594b61ac5468b7106"
+        },
+        {
+          "item_id": "8892145b2419140bd89f0d609c5ad71b9b5d7bd795805ab0f63135c7312e30bd",
+          "path": "agent/channels/github.ts",
+          "fingerprint": "13a70bb787d248021561851ed6cab5a47cdc241ad1a1011a5b9be377667c1b95"
+        },
+        {
+          "item_id": "934e55cbb73c599119352adec93463cc3c64de021ac3a48315fb14d4bb8393d0",
+          "path": "agent/channels/eve.ts",
+          "fingerprint": "07793183867906211aff7fee0e5b8d2a832e48f11c60669ef07955f9f013abb2"
+        },
+        {
+          "item_id": "b1ca151b709b3e2830abbca85a48f202012f0b2bf87fb8212e87e3efacb03727",
+          "path": "agent/channels/dashboard.ts",
+          "fingerprint": "854fb0413656ee643f33861f8fdb70032ea9462611494a0f8b72b35054e36310"
+        },
+        {
+          "item_id": "c1b8412a4fd29ea60d9f4e84641afe6715c8c93cfe448d6af3478961fc2982f5",
+          "path": "agent/lib/observability/run-store.ts",
+          "fingerprint": "58890b1718e4e2465c49ada89a54fff0eed69ec740666831023cec0d1f3106f6"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": []
+    },
+    "elapsed_ms": 1213437
+  },
+  "retry_report": {
+    "schema_version": "ocr.llm-retry-report/v1",
+    "total_requests": 51,
+    "retried_requests": 0,
+    "total_retries": 0,
+    "recovered_requests": 0,
+    "failed_requests": 2,
+    "cancelled_requests": 0,
+    "requests": [
+      {
+        "logical_request_id": "26e40b044a6c7cace18d84ed4844516cae9835f6a2fb801f6c042b592878395e",
+        "provider": "",
+        "model": "glm-5.3",
+        "file_path": "agent/channels/dashboard.ts,agent/channels/eve.ts,agent/channels/github.ts",
+        "task_type": "plan_task",
+        "request_no": 1,
+        "outcome": "failed",
+        "attempts": [
+          {
+            "attempt": 1,
+            "outcome": "error",
+            "error_class": "timeout",
+            "failure_phase": "context",
+            "duration_to_headers_ms": 300028
+          }
+        ]
+      },
+      {
+        "logical_request_id": "b488d50c106e007d70c651aee20271a0999c5042e2d67892abdb628158477591",
+        "provider": "",
+        "model": "glm-5.3",
+        "file_path": "agent/instrumentation/runs.ts,agent/lib/observability/run-store.ts",
+        "task_type": "plan_task",
+        "request_no": 1,
+        "outcome": "failed",
+        "attempts": [
+          {
+            "attempt": 1,
+            "outcome": "error",
+            "error_class": "timeout",
+            "failure_phase": "context",
+            "duration_to_headers_ms": 300027
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,13 +1,23 @@
 import {
   defaultGitHubAuth,
   type GitHubComment,
+  type GitHubEventContext,
   type GitHubInboundContext,
   githubChannel,
 } from "eve/channels/github";
+import type { SessionContext } from "eve/context";
 import { FACTORY_BRANCH_PREFIX, FACTORY_LABEL } from "../lib/constants.js";
 import { mentionPattern, resolveBotName } from "../lib/github/bot-name.js";
 import { githubCredentials } from "../lib/github/credentials.js";
-import { stampAutonomous, stampTrusted } from "../lib/trust.js";
+import {
+  annotateRun,
+  type RunThreadRef,
+} from "../lib/observability/run-store.js";
+import {
+  intakeIssueNumber,
+  stampAutonomous,
+  stampTrusted,
+} from "../lib/trust.js";
 
 /**
  * Commenter roles allowed to start a session by mentioning the agent.
@@ -136,6 +146,101 @@ const PR_SUMMARY_TASK = [
   "Close with one line pointing reviewers at where to start. This comment is a summary, not a review: don't approve, request changes, or ask the author for anything.",
 ].join("\n\n");
 
+/** Matches a GitHub channel continuation token (`repo:<id>:issue:<n>` and its pull/review-thread forms). */
+const GITHUB_THREAD_TOKEN_PATTERN =
+  /^(?:github:)?repo:\d+:(issue|pull):(\d+)(?::review-comment:\d+)?$/;
+
+/**
+ * Parses the channel's continuation token into the thread identity the run
+ * panel displays.
+ *
+ * @remarks
+ * `githubContinuationToken` builds `repo:<repositoryId>:issue:<n>`,
+ * `repo:<id>:pull:<n>`, and `repo:<id>:pull:<n>:review-comment:<cid>`; the
+ * optional `github:` prefix tolerance covers the framework-namespaced form,
+ * which `channel.continuation.token` should already have stripped.
+ */
+const parseGithubThreadToken = (
+  token: string | undefined
+): RunThreadRef | null => {
+  if (token === undefined) {
+    return null;
+  }
+  const match = token.match(GITHUB_THREAD_TOKEN_PATTERN);
+  if (match === null) {
+    return null;
+  }
+  const number = Number(match[2]);
+  if (!Number.isSafeInteger(number)) {
+    return null;
+  }
+  if (match[1] === "issue") {
+    return { kind: "issue", number };
+  }
+  return token.includes(":review-comment:")
+    ? { kind: "review_thread", number }
+    : { kind: "pull", number };
+};
+
+/** Matches a GitHub pull-request URL (`https://host/owner/repo/pull/123`). */
+const PULL_REQUEST_URL_PATTERN =
+  /^https:\/\/[^\s/]+\/[^\s/]+\/[^\s/]+\/pull\/\d+$/;
+
+/**
+ * Finds the first pull-request URL in a tool result, for the panel's PR link.
+ *
+ * @remarks
+ * A URL is metadata the operator needs; nothing else from the result is kept.
+ * The walk is bounded (depth, node count, string length) so a hostile or
+ * pathological result can't cost unbounded time here.
+ */
+const extractPullRequestUrl = (output: unknown): string | null => {
+  const seen: unknown[] = [output];
+  for (let visited = 0; visited < seen.length && visited < 64; visited += 1) {
+    const value = seen[visited];
+    if (typeof value === "string") {
+      if (value.length <= 2048 && PULL_REQUEST_URL_PATTERN.test(value)) {
+        return value;
+      }
+    } else if (Array.isArray(value)) {
+      seen.push(...value.slice(0, 16));
+    } else if (typeof value === "object" && value !== null) {
+      for (const entry of Object.values(value as Record<string, unknown>).slice(
+        0,
+        16
+      )) {
+        seen.push(entry);
+      }
+    }
+  }
+  return null;
+};
+
+/**
+ * Pins the GitHub thread identity onto the run record for this session.
+ *
+ * @remarks
+ * `data` is ignored: every event key shares this annotation, and it is
+ * idempotent (the store fills null fields only), so whichever fires first
+ * carries the mapping and the rest are no-ops. Failures are logged and
+ * swallowed: this is an observability side path and must never affect the
+ * channel's own delivery.
+ */
+const annotateRunThread = async (
+  _data: unknown,
+  channel: GitHubEventContext,
+  ctx: SessionContext
+): Promise<void> => {
+  try {
+    await annotateRun(ctx.session.id, {
+      intakeIssue: intakeIssueNumber(ctx.session.auth.initiator),
+      thread: parseGithubThreadToken(channel.continuation?.token),
+    });
+  } catch (error) {
+    console.error("github channel: run annotation failed", error);
+  }
+};
+
 /**
  * GitHub channel: the factory's main intake and delivery surface, as
  * "Foreman".
@@ -193,10 +298,44 @@ const PR_SUMMARY_TASK = [
  *   mention-stripping correct, and `onComment`'s gate is what keeps a reply
  *   an authorization signal: only mentions from owners, members, and
  *   collaborators ever reach the waiting session.
+ * - `events` carries only observability annotations for the run panel (M5):
+ *   the GitHub thread (from the continuation token) and the intake issue
+ *   number (from the dispatch-time auth stamp) mapped onto the session id, plus
+ *   the draft-PR URL when the orchestrator creates one. Every key used here is
+ *   one the channel has NO built-in handler for, because a supplied handler
+ *   replaces the built-in (`turn.started`'s checkout, `message.completed`'s
+ *   reply, `input.requested`'s prompt, `session.failed`/`turn.failed`'s error
+ *   comment) rather than running alongside it. The handlers write through the
+ *   run store and never affect dispatch, delivery, or trust.
  */
 export default githubChannel({
   botName: resolveBotName,
   credentials: githubCredentials,
+  events: {
+    "action.result": async (data, channel, ctx) => {
+      await annotateRunThread(data, channel, ctx);
+      try {
+        if (
+          data.result.kind === "tool-result" &&
+          data.result.toolName === "github__createPullRequest"
+        ) {
+          const prUrl = extractPullRequestUrl(data.result.output);
+          if (prUrl !== null) {
+            await annotateRun(ctx.session.id, { prUrl });
+          }
+        }
+      } catch (error) {
+        console.error("github channel: PR URL extraction failed", error);
+      }
+    },
+    // Free keys only (no built-ins replaced); each fires within the session's
+    // context, so the first one to run pins the thread mapping for the run
+    // record. annotateRun fills null fields, so later events are no-ops.
+    "actions.requested": annotateRunThread,
+    "session.completed": annotateRunThread,
+    "session.waiting": annotateRunThread,
+    "turn.completed": annotateRunThread,
+  },
   onCheckSuite: (ctx, suite) => {
     const raw = suite.raw as {
       head_branch?: unknown;
