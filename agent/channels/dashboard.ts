@@ -248,7 +248,7 @@ const runPanelPage = (): string => `<!doctype html>
   .g-bar.run { fill: var(--c-run); }
   .g-bar.bad { fill: var(--c-bad); }
   .g-bar.wait { fill: var(--c-wait); }
-  .pulse circle, .pulse rect { animation: breathe 1.6s ease-in-out infinite; }
+  .pulse circle, .pulse rect, circle.pulse, rect.pulse { animation: breathe 1.6s ease-in-out infinite; }
   @keyframes breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 </style>
 </head>
@@ -329,7 +329,7 @@ function visiblePipeline(record) {
   }).map(([name, label]) => ({ ...groups[name], label }));
 }
 function summaryText(record, name) {
-  const s = (record.stationSummaries || {})[name];
+  const s = (record.stationSummaries || {})[name.replace(/^run_/, "")];
   if (!s) return "";
   return Object.entries(s.fields).map(([k, v]) => k + "=" + v).join(" · ");
 }
@@ -358,14 +358,14 @@ function miniPipeline(record, activeStation) {
   const stations = visiblePipeline(record);
   const reworkRounds = (stationGroups(record).run_reviewer?.rounds ?? []).length;
   const parts = stations.map((station, i) => {
-    const state = station.name === activeStation && station.state !== "completed" ? "running" : station.state;
+    const state = station.name === activeStation && station.state === "pending" ? "running" : station.state;
     const cls = state === "completed" ? "ok" : state === "running" ? "run" : state === "failed" ? "bad" : "off";
-    const badge = station.name === "run_reviewer" && reworkRounds > 1 ? '<tspan class="mini-badge">×' + reworkRounds + "</tspan>" : "";
-    const connector = i === 0 ? "" : '<line x1="' + (i * 26 - 20) + '" y1="9" x2="' + (i * 26 - 6) + '" y2="9" class="mini-line ' + cls + '" />';
-    return connector + '<circle cx="' + i * 26 + '" cy="9" r="5" class="mini-node ' + cls + (state === "running" ? " pulse" : "") + '">' +
+    const badge = station.name === "run_reviewer" && reworkRounds > 1 ? '<text x="' + (i * 26 + 9) + '" y="12" class="mini-badge">×' + reworkRounds + "</text>" : "";
+    const connector = i === 0 ? "" : '<line x1="' + (i * 26 - 14) + '" y1="9" x2="' + (i * 26 + 2) + '" y2="9" class="mini-line ' + cls + '" />';
+    return connector + '<circle cx="' + (i * 26 + 6) + '" cy="9" r="5" class="mini-node ' + cls + (state === "running" ? " pulse" : "") + '">' +
       '<title>' + esc(station.label + "：" + STATION_STATE_LABEL[state]) + "</title></circle>" + badge;
   }).join("");
-  return '<svg class="mini" width="' + ((stations.length - 1) * 26 + 12) + '" height="18" aria-hidden="true">' + parts + "</svg>";
+  return '<svg class="mini" width="' + ((stations.length - 1) * 26 + 24) + '" height="18" aria-hidden="true">' + parts + "</svg>";
 }
 
 // ---------- 详情 hero：管线图 / 甘特 双形态（一键切换） ----------
@@ -664,7 +664,9 @@ async function pump(response, onEvent) {
 // 实时状态机（T5）：流事件即时驱动视图，不等 30 秒轮询；轮询只做收敛对账。
 const liveRowActive = new Map(); // 列表行当前站（sessionId -> station label）
 function noteActiveStation(stationTag) {
-  liveActive = stationTag;
+  // 流事件的 name 是子代理 id（如 "implementer"），管线模型用工具名
+  // （"run_implementer"）——统一归一到工具名再比较。
+  liveActive = stationTag.startsWith("run_") ? stationTag : "run_" + stationTag;
   if (selected !== null && currentRun && currentRun.record.sessionId === selected) {
     renderHero(currentRun);
   }
@@ -675,6 +677,7 @@ async function markStageBoundary(sessionId) {
     await refreshDetail(sessionId);
   }
   liveActive = null;
+  liveRowActive.delete(sessionId);
   if (currentRun && currentRun.record.sessionId === sessionId) renderHero(currentRun);
 }
 
@@ -719,6 +722,9 @@ async function refreshDetail(id) {
     if (selected === id) {
       renderDetail(run);
     }
+    if (run.record.terminal !== null) {
+      liveRowActive.delete(id);
+    }
     return run.record.terminal !== null;
   } catch {
     return false;
@@ -749,7 +755,7 @@ async function followLive(id) {
             const tag = event.data.name ?? "站点";
             liveLine(prefix + eventTime(event) + " → 进入站点 " + tag + "（跟随其会话流）");
             noteActiveStation(tag);
-            liveRowActive.set(id, tag);
+            liveRowActive.set(id, tag.startsWith("run_") ? tag : "run_" + tag);
             followChild(event.data.childSessionId, tag);
             return;
           }
@@ -818,8 +824,8 @@ function route() {
   selected = id;
   $("list-view").hidden = true;
   $("detail-view").hidden = false;
-  refreshDetail(id)
-    .then(() => { followLive(id); })
+  fetchJSON("/run/" + encodeURIComponent(id))
+    .then((run) => { renderDetail(run); followLive(id); })
     .catch(() => { $("detail-kv").innerHTML = '<span class="muted">找不到该运行的记录（可能已被 30 天清理）。</span>'; });
 }
 
