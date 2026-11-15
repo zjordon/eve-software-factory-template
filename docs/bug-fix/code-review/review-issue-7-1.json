@@ -1,0 +1,93 @@
+{
+  "status": "complete",
+  "llm": {
+    "model": "glm-5.3"
+  },
+  "message": "Review complete: 0 finding(s) across 1 selected item(s).",
+  "summary": {
+    "files_reviewed": 1,
+    "comments": 0,
+    "total_tokens": 132065,
+    "input_tokens": 126404,
+    "output_tokens": 5661,
+    "cache_read_tokens": 87616,
+    "elapsed": "1m55s"
+  },
+  "tool_calls": {
+    "total": 17,
+    "by_tool": {
+      "code_search": 10,
+      "file_find": 3,
+      "file_read": 4
+    },
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [],
+  "groups": [
+    {
+      "label": "agent/instrumentation/runs.ts",
+      "files": ["agent/instrumentation/runs.ts"]
+    }
+  ],
+  "session_id": "cc4cdd71-a170-4375-9d47-c9a0e67e53d5",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "cc4cdd71-a170-4375-9d47-c9a0e67e53d5",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "a82aa01c5f1f63fd659f972dc306afe00ac314298406c1c2142f55677361688b"
+    },
+    "input": {
+      "mode": "range",
+      "requested_from": "main",
+      "requested_head": "fix/7-workflow-session-noise",
+      "resolved_base": "6a98accd90f08d95a647817f029a587b931387a7",
+      "resolved_head": "f4aec34ae3cdd5b4ab46ad543f4d0fa6089cb5d9",
+      "exact_range": "6a98accd90f08d95a647817f029a587b931387a7..f4aec34ae3cdd5b4ab46ad543f4d0fa6089cb5d9",
+      "source_artifact_sha256": "f517cdcb1689877b70e2b7f55d0649156104bcf7b9308a44403aec43833e97e6"
+    },
+    "execution": {
+      "ocr_version": "v1.13.10",
+      "model": "glm-5.3",
+      "configured_concurrency": 8,
+      "max_tool_request_times": 100,
+      "rule_config_sha256": "8d2f5b7546bb267cfe69043c779b086c9d97be6115201297eab993604b7794f0",
+      "runtime_config_sha256": "d82c4b9be9df12c9a549d237bc74133f0fb6c4198a31e53dc5bd1ac7eb20251f"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "114ea3af554ffc58a5d5c4fb481beb0aee2f8ef23c7a919e9636cb01eabc6800",
+          "path": "agent/instrumentation/runs.ts",
+          "fingerprint": "94f62a01b02539340da964f2161d2ccbe37bc23f4f493cdf28762f36eeef663c"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "114ea3af554ffc58a5d5c4fb481beb0aee2f8ef23c7a919e9636cb01eabc6800",
+          "path": "agent/instrumentation/runs.ts",
+          "fingerprint": "94f62a01b02539340da964f2161d2ccbe37bc23f4f493cdf28762f36eeef663c"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": [],
+      "excluded": [
+        {
+          "item_id": "5c5d7ed337ced543ece77b7567f9934db39348ada8615c5bbe8d23a1a04600a9",
+          "path": "out/运维手册.md",
+          "exclude_reason": "user_exclude"
+        },
+        {
+          "item_id": "df91af91aed1c9293368d6fdff23424f4ee4636c19284b2cea8cd740e81a2ae9",
+          "path": "docs/implement-plan/M5-可观测性.md",
+          "exclude_reason": "user_exclude"
+        }
+      ]
+    },
+    "elapsed_ms": 114561
+  }
+}
