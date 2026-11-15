@@ -831,7 +831,11 @@ function route() {
       renderDetail(run);
       followLive(id);
     })
-    .catch(() => { $("detail-kv").innerHTML = '<span class="muted">找不到该运行的记录（可能已被 30 天清理）。</span>'; });
+    .catch(() => {
+      // 同一守卫盖拒绝路径：晚到的旧请求失败不得覆盖当前选中的视图。
+      if (selected !== id) return;
+      $("detail-kv").innerHTML = '<span class="muted">找不到该运行的记录（可能已被 30 天清理）。</span>';
+    });
 }
 
 $("back").addEventListener("click", () => { location.hash = ""; });

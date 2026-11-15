@@ -1,0 +1,92 @@
+{
+  "status": "complete",
+  "llm": {
+    "model": "glm-5.3"
+  },
+  "message": "Review complete: 1 finding(s) across 1 selected item(s).",
+  "summary": {
+    "files_reviewed": 1,
+    "comments": 1,
+    "total_tokens": 85549,
+    "input_tokens": 77199,
+    "output_tokens": 8350,
+    "cache_read_tokens": 42752,
+    "elapsed": "2m12s"
+  },
+  "tool_calls": {
+    "total": 12,
+    "by_tool": {
+      "code_comment": 1,
+      "code_search": 6,
+      "file_read": 5
+    },
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [
+    {
+      "path": "agent/channels/dashboard.ts",
+      "content": "The race guard is only applied to the success path; the sibling .catch still writes to #detail-kv unconditionally, so the very race this fix targets remains reachable via a late-rejecting stale fetch. Scenario: open run A (fetch A stalls) → click run B → fetch B resolves and renderDetail(B) fills #detail-kv → fetch A then rejects (conn reset / 504 / 404 after cleanup) → the catch overwrites B's rendered key-values with \"找不到该运行的记录…\" while selected === B. The view shows a wrong \"not found\" error for the currently selected run until the 30s refreshDetail interval re-renders (line 842). Apply the same guard in the catch.",
+      "suggestion_code": "      // 慢响应竞态守卫：晚到的旧 run 不得覆盖当前选中，也不得抢占实时流。\n      if (selected !== id) return;\n      renderDetail(run);\n      followLive(id);\n    })\n    .catch(() =\u003e {\n      if (selected !== id) return;\n      $(\"detail-kv\").innerHTML = '\u003cspan class=\"muted\"\u003e找不到该运行的记录（可能已被 30 天清理）。\u003c/span\u003e';\n    });",
+      "existing_code": "      // 慢响应竞态守卫：晚到的旧 run 不得覆盖当前选中，也不得抢占实时流。\n      if (selected !== id) return;\n      renderDetail(run);\n      followLive(id);\n    })",
+      "start_line": 829,
+      "end_line": 833,
+      "thinking": "Now I have a full picture:\n\n- `route()` sets `selected = id` synchronously, aborts previous live streams, clears poll timer.\n- The new guard in `.then` correctly checks `selected !== id`.\n- `followLive` and `refreshDetail` already have their own `selected === id` guards.\n- The `.catch` in `route()` (line 834) does NOT have a guard — it writes the \"not found\" message into `#detail-kv` unconditionally.\n\nFailure scenario for the unguarded catch:\n1. User opens run A's detail (hash `#A`). `selected = \"A\"`; fetch A is in flight and stalls/fails slowly (e.g., connection reset after B loads, or a 504 that takes tens of seconds).\n2. User clicks run B in the list (hash `#B`). `route()` runs: `selected = \"B\"`; fetch B starts.\n3. Fetch B resolves → guard passes → `renderDetail(B)` fills `#detail-kv` with B's data; `followLive(B)` starts.\n4. Fetch A then rejects → `.catch` fires unconditionally → `#detail-kv` innerHTML is replaced with the \"找不到该运行的记录（可能已被 30 天清理）\" message.\n\nResult: the user is looking at run B (live stream running for B), but the detail panel shows a \"record not found\" error belonging to run A. This is exactly the failure class the commit claims to fix (\"晚到的旧 run 不得覆盖当前选中\"), but only the success path was guarded — the failure path of the same race remains. Self-healing is at most 30s later via the `refreshDetail` interval (line 842), but only after up to 30 seconds of corrupted UI; and refreshDetail's catch returns false without re-rendering, but on success it would re-render. Actually wait — refreshDetail(B) at next 30s tick would succeed and re-render, so corruption lasts up to 30s. Still a genuine correctness defect on a real path.\n\nIs this within review scope? The catch line is unchanged context in the diff. But the review's mandate is the fix commit for the race guard; the incomplete guard is a defect of the change (the change's stated purpose is not fully achieved). The instructions say \"Avoid commenting on ... unchanged code\" — however this is a case where the changed code's fix is incomplete, and the comment can be anchored to the newly added guard lines... Actually the code_comment tool requires `existing_code` to be newly added lines. I can anchor on the guard block and mention the catch asymmetry, suggesting to guard the catch too.\n\nHmm, but is the catch race \"must fix\" per user's severity boundary? \"不改就会出错的问题——正确性缺陷\" — yes: wrong UI state shown to user for the currently selected run, triggered by realistic timing (network slowness + navigation). The comment must give a concrete failure scenario, which I have.\n\nBut wait — let me also double check whether there's any other issue in the new code itself:\n\n1. Guard placement is correct — `selected = id` is set synchronously before fetch, and `route()` is the only place changing `selected` (lines 818, 824), plus nothing else. So `selected !== id` correctly detects navigation away.\n\n2. Early return in `.then` — fine.\n\n3. Comment quality — the rules say don't report comment/naming issues. Fine.\n\n4. `renderDetail(run)` — run guaranteed object since fetchJSON rejects non-ok and parses JSON. Fine.\n\n5. One more consideration: when the guard returns early (stale response), nothing renders — correct, since the newer route() will handle rendering. But what if the newer route's fetch is still pending? Then detail-kv shows stale/empty until it resolves — acceptable.\n\n6. Another edge: user selects A, fetch A slow; user goes back to list (`selected = null`); fetch A resolves → guard returns → fine. If fetch A rejects → catch writes error into hidden detail-kv — invisible, harmless, and gets overwritten next time a run is opened (route shows detail-view; then fetch resolves and renderDetail replaces detail-kv). Edge: fetch for the new run fails too — error message correct. OK.\n\nSo the only reportable issue: the `.catch` lacks the same guard, letting a late-rejecting stale fetch overwrite the current selection's detail. Severity: medium? The user's boundary demands correctness defects. The visible corruption window is up to 30s (until refreshDetail interval re-renders), and the scenario requires the old fetch to reject after the new one resolves. Also note: refreshDetail on the 30s interval only re-renders on fetch success; if B's fetch works (which it did in step 3), then B refresh works, so corruption heals in ≤30s. Still wrong behavior meanwhile. Also there's another subtle path: `markStageBoundary` → `refreshDetail` could also heal sooner.\n\nSeverity: I'd say \"medium\" — transient UI corruption, self-healing ≤30s, but definitely a correctness defect in exactly the class being fixed. Given the round-2 P2 was about this race, this is an incomplete fix of a P2. I'll report as bug, medium severity (maybe high? The boundary says only must-fix; medium severity fits \"correctness defect with limited blast radius\"). I'll go with medium.\n\nSuggestion: add the same guard to catch:\n\n```js\n.catch(() =\u003e {\n  if (selected !== id) return;\n  $(\"detail-kv\").innerHTML = '\u003cspan class=\"muted\"\u003e找不到该运行的记录（可能已被 30 天清理）。\u003c/span\u003e';\n});\n```\n\nAnchor: the newly added lines (guard block) — but the comment targets the catch. The tool requires existing_code to be in the diff's added lines. The added lines are:\n\n```\n    .then((run) =\u003e {\n      // 慢响应竞态守卫：晚到的旧 run 不得覆盖当前选中，也不得抢占实时流。\n      if (selected !== id) return;\n      renderDetail(run);\n      followLive(id);\n    })\n```\n\nI'll anchor on that block and explain the catch asymmetry. The suggestion_code should include the full corrected .then/.catch block to show where the guard goes.\n\nWait, one more check: is there any other new issue? What about `followLive` being skipped when guard returns — if the user navigated A→B, route() for B already set up its own follow. Fine.\n\nWhat about the scenario where fetch A resolves while `selected === null` (list view) — guard returns, no followLive — correct.\n\nAlso check: `route()` is triggered by hashchange; rapid double navigation A→B→A: route(A1) fetch pending; route(B) fetch; route(A2) fetch. Guard checks `selected !== id` — but A1 and A2 have the same id! If A1 (stale, from first visit) resolves after A2's route, `selected === id === A`, so guard passes and renders — but that's fine, it's the same run's data; worst case slightly older snapshot, then followLive(A) called again — followLive aborts previous (line 735) — fine. No bug.\n\nOne more: does the guard need `liveAbort` consideration? No.\n\nSo single comment. Let me also make sure severity mapping: \"bug\", medium.\n\nContent (English per \"Always respond in English\"? The conversation says respond in English. The code comments... the existing code comments are in Chinese. My review comment should be in English since \"Always respond in English\". The background is Chinese but instructions say respond in English. I'll write the comment in English.\n\nComment content: describe the failure scenario concretely and give the fix.",
+      "category": "bug",
+      "severity": "medium"
+    }
+  ],
+  "groups": [
+    {
+      "label": "agent/channels/dashboard.ts",
+      "files": ["agent/channels/dashboard.ts"]
+    }
+  ],
+  "session_id": "c9d2f412-f5fc-4968-b463-db9cd37868fa",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "c9d2f412-f5fc-4968-b463-db9cd37868fa",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "eec21556473e2f3b36dfc7a5da93b713cc2717fe29ff2ad405efec95ef03b192"
+    },
+    "input": {
+      "mode": "range",
+      "requested_from": "1bad68a",
+      "requested_head": "feat/m6-panel-ux",
+      "resolved_base": "1bad68a2e3846015e8e3fb2aebd5411c548e050f",
+      "resolved_head": "75367d87bc8853e92e0b4c170de5c1a96ec90ad2",
+      "exact_range": "1bad68a2e3846015e8e3fb2aebd5411c548e050f..75367d87bc8853e92e0b4c170de5c1a96ec90ad2",
+      "source_artifact_sha256": "3c6f87c47041bcfd4c43fa4c6a38e4487812dcf84c430e2317c2363b8804290c"
+    },
+    "execution": {
+      "ocr_version": "v1.13.3",
+      "model": "glm-5.3",
+      "configured_concurrency": 8,
+      "rule_config_sha256": "aec8b9c66d91058e45e329dd68d74d645753d14731850de0fb7c7c854f533602",
+      "runtime_config_sha256": "d82c4b9be9df12c9a549d237bc74133f0fb6c4198a31e53dc5bd1ac7eb20251f"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "b1ca151b709b3e2830abbca85a48f202012f0b2bf87fb8212e87e3efacb03727",
+          "path": "agent/channels/dashboard.ts",
+          "fingerprint": "997f8c74671c3d143919f028b42131d347d13b2e52446a3501c7b4bfb0934c60"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "b1ca151b709b3e2830abbca85a48f202012f0b2bf87fb8212e87e3efacb03727",
+          "path": "agent/channels/dashboard.ts",
+          "fingerprint": "997f8c74671c3d143919f028b42131d347d13b2e52446a3501c7b4bfb0934c60"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": []
+    },
+    "elapsed_ms": 132360
+  }
+}
