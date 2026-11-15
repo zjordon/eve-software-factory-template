@@ -9,7 +9,7 @@
 # proves a backup is actually loadable.
 set -euo pipefail
 
-REPO="/home/jasonzhang/git/z_jordon/eve-software-factory-template"
+REPO="/home/jasonzhang/git/z_jordon/tree-shipyard"
 DEST="/data/factory-backup"
 KEEP=14
 
