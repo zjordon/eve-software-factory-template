@@ -440,9 +440,11 @@ export const dailyTotals = (records: readonly RunRecord[]): DailyTotal[] => {
  * @remarks
  * Approval hang: an input request (usually an approval card) never resolved
  * while the session sits non-terminal past the threshold. Error loop:
- * consecutive turn failures at or above the streak threshold, typed by the
- * most recent action error code (turn-level error details are content and are
- * not recorded under the metadata-only policy).
+ * consecutive turn failures at or above the streak threshold while the run is
+ * still live (a reset/retired session's failure history is record, not an
+ * active zombie), typed by the most recent action error code (turn-level
+ * error details are content and are not recorded under the metadata-only
+ * policy).
  */
 export function detectZombie(record: RunRecord): ZombieFlag | null {
   if (record.terminal === null) {
@@ -459,7 +461,7 @@ export function detectZombie(record: RunRecord): ZombieFlag | null {
       };
     }
   }
-  if (record.failureStreak >= ERROR_LOOP_STREAK) {
+  if (record.terminal === null && record.failureStreak >= ERROR_LOOP_STREAK) {
     const last = record.turnFailures.at(-1);
     return {
       detail: `${record.failureStreak} consecutive failed turns${
