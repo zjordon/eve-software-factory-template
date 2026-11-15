@@ -1,6 +1,8 @@
-<img width="100%" alt="eve Software Factory Banner" src=".github/banner.png" />
+<img width="100%" alt="tree-shipyard banner" src=".github/banner.png" />
 
-# eve Software Factory Template
+# tree-shipyard
+
+树哥的软件工厂:自托管形态的 eve software factory,基于 [vercel-labs/eve-software-factory-template](https://github.com/vercel-labs/eve-software-factory-template) 深度改造(智谱直连、Docker 沙箱、pm2 常驻、cloudflared 隧道、运行面板)。
 
 [![Docs](https://img.shields.io/badge/Documentation-000?style=flat-square&logo=readthedocs&logoColor=FFF&labelColor=000&color=000)](https://ask-foreman.dev/docs)
 [![Agent Stack](https://img.shields.io/badge/Agent%20Stack-000?style=flat-square&logo=vercel&logoColor=FFF&labelColor=000&color=000)](https://vercel.com/kb/agent-stack)

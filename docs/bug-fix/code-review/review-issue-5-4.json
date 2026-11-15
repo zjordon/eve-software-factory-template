@@ -27,9 +27,7 @@
   "groups": [
     {
       "label": "agent/channels/dashboard.ts",
-      "files": [
-        "agent/channels/dashboard.ts"
-      ]
+      "files": ["agent/channels/dashboard.ts"]
     }
   ],
   "session_id": "b83f2295-c3c8-457b-94d7-c75988f1f77e",

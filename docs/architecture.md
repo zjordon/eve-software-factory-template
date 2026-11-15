@@ -10,7 +10,7 @@
 
 | 项目 | 内容 |
 |------|------|
-| 名称 | eve-software-factory-template 自托管形态(代理名沿用 Foreman) |
+| 名称 | tree-shipyard(前 eve-software-factory-template)自托管形态(代理名沿用 Foreman) |
 | 语言 | TypeScript (strict, ESM, NodeNext 模块解析) |
 | 类型 | AI Agent 编排器 / 软件工厂模板,**自有机器部署** |
 | 描述 | 基于 eve 框架的编排 Agent,把 GitHub 工单流转过四个站点(classifier → analyst → implementer → reviewer),交付经审查的草稿 Pull Request;运行时、凭据、存储、沙箱全部本地化,仅保留对 GitHub 与模型 API 的出站依赖 |
@@ -20,7 +20,7 @@
 ### 1.2 目录结构(改造后)
 
 ```text
-eve-software-factory-template/
+tree-shipyard/
 ├── agent/
 │   ├── agent.ts              # 根 Agent(编排器):模型 + 会话预算;connections 不再含 Linear
 │   ├── instructions.ts       # 编排器系统提示词,构建期注入 FACTORY_REPO
