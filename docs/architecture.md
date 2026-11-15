@@ -236,7 +236,8 @@ issue 打 factory 标签
 - **归属**:站点子会话不建记录;model.call 的 token 与 run_*/push_branch/github__createPullRequest 动作按 `scope.rootSessionId` 归并到根 run(`rootSessionId` 缺省即根自身,实测 eve channel 会话即此形态)。
 - **面板**:`GET /runs`(列表 JSON,僵尸置顶)/ `GET /run/:id`(详情)/ `GET /run/:id/stream`(attachSession NDJSON 实时跟随,断流降级 10 秒轮询)/ `GET /runs/ui`(内联单页,30 秒轮询)。认证走 `agent/lib/route-auth.ts`(从 eve.ts 抽出的 Basic 策略,实测 401 + Basic challenge);路径刻意用 `/run/:id` 避开 `/runs/ui` 静态/参数歧义。
 - **僵尸检测(读时计算)**:护栏挂起型 = 未 resolve 的 input.requested 停滞 > 30 分钟且非终态;错误循环型 = 连续 ≥2 次 turn.failed(errorType 取 action 层 errorCode,turn 层错误详情属内容、metadata-only 不落)。实测构造样本两型均正确置顶标红。
-- **内容边界**:面板与记录只含元数据(issue 号、动作名、时长、token 数、PR URL、errorCode);对话内容、偏好、工厂大脑永不进数据面。
+- **内容边界**:面板与记录只含元数据(issue 号、动作名、时长、token 数、PR URL、errorCode);对话内容、偏好、工厂大脑永不进数据面。M6 起多一类白名单数据:**站点 outputSchema 的遥测级投影**(枚举/布尔/封顶 120 字符单行/数组计数,单模块 `agent/lib/observability/stage-summary.ts` 收口,`run_` 包装工具经 "use step" 写入 stationSummaries)——它是编排器本就消费的机读结构化产出,非对话内容;自由文本正文(计划/发现/标准/diff)只以计数形态出现,新增字段过评审(M6-T6 口径)。
+- **视图面(M6)**:列表迷你管线(连线点串+返工 ×N);详情 hero 管线图(内联 SVG,完成绿/进行中呼吸/失败红/未到灰、评审返工 V→I 回边+轮次徽标、审批等待紫段、僵尸卡点描红)与甘特(比例时间轴,站间空隙=编排器耗时)一键切换;实时流事件即时驱动视图,30 秒轮询为收敛对账;实时日志为钻取层。
 
 ## 3. 依赖关系
 

@@ -210,6 +210,46 @@ const runPanelPage = (): string => `<!doctype html>
   .kv dt { font-weight: 600; } .kv dd { margin: 0; }
   button { font: inherit; padding: 0.25rem 0.8rem; border-radius: 6px; border: 1px solid currentColor; background: transparent; color: inherit; cursor: pointer; }
   code { background: rgba(125, 125, 125, 0.15); border-radius: 4px; padding: 0 0.3rem; }
+
+  :root { --c-ok:#1a7f36; --c-bad:#cf222e; --c-run:#9a6700; --c-wait:#8250df; --c-off:#d0d7de; --c-dim:#57606a; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --c-ok:#3fb950; --c-bad:#f85149; --c-run:#d29922; --c-wait:#8957e5; --c-off:#30363d; --c-dim:#8b949e; }
+  }
+  .switch { display: flex; gap: 0.4rem; margin-bottom: 0.6rem; }
+  .switch button.on { font-weight: 700; border-width: 2px; }
+  .pl-edge { stroke: var(--c-off); stroke-width: 2; }
+  .pl-edge.off { stroke-dasharray: 3 4; opacity: 0.5; }
+  .pl-node circle { fill: var(--c-off); }
+  .pl-node.ok circle { fill: var(--c-ok); }
+  .pl-node.run circle { fill: var(--c-run); }
+  .pl-node.bad circle { fill: var(--c-bad); }
+  .pl-node.stuck circle { stroke: var(--c-bad); stroke-width: 3; }
+  .pl-glyph { fill: #fff; font-size: 12px; font-weight: 600; }
+  .pl-name { fill: inherit; font-size: 11px; }
+  .pl-dur { fill: var(--c-dim); font-size: 10px; }
+  .pl-rounds { fill: var(--c-run); }
+  .pl-back { fill: none; stroke: var(--c-run); stroke-width: 1.5; stroke-dasharray: 4 3; }
+  .pl-badge { font-size: 10px; fill: var(--c-run); }
+  .pl-wait rect { fill: var(--c-wait); }
+  .pl-wait text { fill: #fff; font-size: 10px; }
+  .mini-line { stroke: var(--c-off); stroke-width: 1.5; }
+  .mini-line.ok { stroke: var(--c-ok); }
+  .mini-line.run { stroke: var(--c-run); }
+  .mini-line.bad { stroke: var(--c-bad); }
+  .mini-node { fill: var(--c-off); }
+  .mini-node.ok { fill: var(--c-ok); }
+  .mini-node.run { fill: var(--c-run); }
+  .mini-node.bad { fill: var(--c-bad); }
+  .mini-badge { font-size: 9px; fill: var(--c-run); }
+  .g-axis { stroke: var(--c-off); }
+  .g-tick { font-size: 9px; fill: var(--c-dim); }
+  .g-label { font-size: 10px; fill: var(--c-dim); }
+  .g-bar.ok { fill: var(--c-ok); }
+  .g-bar.run { fill: var(--c-run); }
+  .g-bar.bad { fill: var(--c-bad); }
+  .g-bar.wait { fill: var(--c-wait); }
+  .pulse circle, .pulse rect, circle.pulse, rect.pulse { animation: breathe 1.6s ease-in-out infinite; }
+  @keyframes breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 </style>
 </head>
 <body>
@@ -231,8 +271,16 @@ const runPanelPage = (): string => `<!doctype html>
 </main>
 <section id="detail-view" hidden>
   <p><button id="back">← 返回列表</button></p>
-  <div class="card" id="detail"></div>
-  <div class="card"><div class="muted">实时事件（进入站点时跟随站点会话流；断流后自动转为 10 秒轮询）</div><div class="muted" id="activity"></div><pre id="live"></pre></div>
+  <div class="card">
+    <div id="hero-switch" class="switch"></div>
+    <div id="hero"></div>
+    <div id="detail-kv"></div>
+  </div>
+  <div class="muted" id="activity"></div>
+  <details class="card" id="live-box">
+    <summary>实时事件（钻取层：跟随站点会话流，断流自动降级 10 秒轮询）</summary>
+    <pre id="live"></pre>
+  </details>
 </section>
 <script>
 "use strict";
@@ -250,21 +298,42 @@ const fmtDur = (ms) => {
 const fmtTokens = (n) => (n >= 10000 ? (n / 1000).toFixed(1) + "k" : String(n ?? 0));
 const clock = (iso) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString("zh-CN", { hour12: false }); };
 
-const STATIONS = [
-  ["run_classifier", "C"], ["run_researcher", "R"], ["run_analyst", "A"],
-  ["run_implementer", "I"], ["run_reviewer", "V"],
+// ---------- 管线模型（列表迷你管线 / 详情管线图 / 甘特 共用） ----------
+const PIPELINE = [
+  ["run_classifier", "分诊"], ["run_researcher", "研究"], ["run_analyst", "分析"],
+  ["run_implementer", "实现"], ["run_reviewer", "评审"], ["push_branch", "推送"], ["github__createPullRequest", "PR"],
 ];
-function stageMarks(record) {
-  return STATIONS.map(([name, label]) => {
-    const stages = record.stages.filter((s) => s.name === name);
-    if (stages.length === 0) return '<span class="muted">·</span>';
-    const last = stages[stages.length - 1];
-    const cls = last.outcome === "completed" ? "ok"
-      : last.outcome === null ? "run"
-      : "bad";
-    return '<b title="' + esc(name) + ' ' + esc(last.outcome ?? "进行中") + '" class="dot ' + cls + '" style="display:inline-block;width:auto;border-radius:4px;padding:0 3px;color:#fff;background-color:inherit">' + label + (stages.length > 1 ? "×" + stages.length : "") + "</b>";
-  }).join(" ");
+const STATION_STATE_LABEL = { pending: "未到", running: "进行中", completed: "完成", failed: "失败" };
+
+function stationGroups(record) {
+  const groups = {};
+  for (const [name] of PIPELINE) {
+    const rounds = record.stages.filter((s) => s.name === name);
+    groups[name] = { name, rounds, state: "pending" };
+  }
+  for (const group of Object.values(groups)) {
+    if (group.rounds.length === 0) continue;
+    const last = group.rounds[group.rounds.length - 1];
+    if (last.completedAt === null) group.state = "running";
+    else if (last.outcome === "completed") group.state = "completed";
+    else group.state = "failed";
+  }
+  return groups;
 }
+function visiblePipeline(record) {
+  const groups = stationGroups(record);
+  return PIPELINE.filter(([name]) => {
+    if (name === "run_researcher") return groups[name].rounds.length > 0;
+    if (name === "github__createPullRequest") return groups[name].rounds.length > 0 || record.prUrl !== null;
+    return true;
+  }).map(([name, label]) => ({ ...groups[name], label }));
+}
+function summaryText(record, name) {
+  const s = (record.stationSummaries || {})[name.replace(/^run_/, "")];
+  if (!s) return "";
+  return Object.entries(s.fields).map(([k, v]) => k + "=" + v).join(" · ");
+}
+
 const STATUS_LABEL = { running: "运行中", waiting: "等待中", completed: "已完成", failed: "失败" };
 function statusCell(record) {
   const cls = record.status === "completed" ? "ok" : record.status === "failed" ? "bad"
@@ -284,9 +353,135 @@ function outcomeCell(record) {
   return '<span class="muted">–</span>';
 }
 
+// ---------- 列表行迷你管线（GitLab mini graph 思路：连线点串） ----------
+function miniPipeline(record, activeStation) {
+  const stations = visiblePipeline(record);
+  const reworkRounds = (stationGroups(record).run_reviewer?.rounds ?? []).length;
+  const parts = stations.map((station, i) => {
+    const state = station.name === activeStation && station.state === "pending" ? "running" : station.state;
+    const cls = state === "completed" ? "ok" : state === "running" ? "run" : state === "failed" ? "bad" : "off";
+    const badge = station.name === "run_reviewer" && reworkRounds > 1 ? '<text x="' + (i * 26 + 9) + '" y="12" class="mini-badge">×' + reworkRounds + "</text>" : "";
+    const connector = i === 0 ? "" : '<line x1="' + (i * 26 - 14) + '" y1="9" x2="' + (i * 26 + 2) + '" y2="9" class="mini-line ' + cls + '" />';
+    return connector + '<circle cx="' + (i * 26 + 6) + '" cy="9" r="5" class="mini-node ' + cls + (state === "running" ? " pulse" : "") + '">' +
+      '<title>' + esc(station.label + "：" + STATION_STATE_LABEL[state]) + "</title></circle>" + badge;
+  }).join("");
+  return '<svg class="mini" width="' + ((stations.length - 1) * 26 + 24) + '" height="18" aria-hidden="true">' + parts + "</svg>";
+}
+
+// ---------- 详情 hero：管线图 / 甘特 双形态（一键切换） ----------
+let heroView = "pipeline";
+let liveActive = null; // 实时流推定的当前站（subagent.called）
+
+function pipelineSvg(record, zombie) {
+  const stations = visiblePipeline(record);
+  const n = stations.length;
+  if (n === 0) return '<div class="muted">尚无站点动作。</div>';
+  const step = 108, pad = 16, width = (n - 1) * step + pad * 2 + 20;
+  const cy = 64, yDur = cy + 22, yLabel = cy - 26;
+  let svg = "";
+  // 正向连线
+  for (let i = 1; i < n; i += 1) {
+    const prev = stations[i - 1], cur = stations[i];
+    const reached = prev.state !== "pending" || cur.state !== "pending";
+    svg += '<line x1="' + (pad + (i - 1) * step + 18) + '" y1="' + cy + '" x2="' + (pad + i * step - 18) + '" y2="' + cy +
+      '" class="pl-edge' + (reached ? "" : " off") + '" />';
+  }
+  // 评审返工回边 V→I（第 N 轮徽标）
+  const vIdx = stations.findIndex((s) => s.name === "run_reviewer");
+  const iIdx = stations.findIndex((s) => s.name === "run_implementer");
+  const vRounds = vIdx >= 0 ? stations[vIdx].rounds.length : 0;
+  if (vIdx > iIdx && iIdx >= 0 && vRounds >= 2) {
+    const x1 = pad + vIdx * step, x2 = pad + iIdx * step;
+    svg += '<path d="M ' + x1 + " " + (cy - 14) + ' C ' + x1 + " " + (cy - 52) + ", " + x2 + " " + (cy - 52) + ", " + x2 + " " + (cy - 14) +
+      '" class="pl-back" marker-end="url(#backArrow)" />' +
+      '<text x="' + ((x1 + x2) / 2) + '" y="' + (cy - 56) + '" class="pl-badge" text-anchor="middle">返工 第 ' + vRounds + " 轮</text>";
+  }
+  // 节点
+  stations.forEach((station, i) => {
+    const x = pad + i * step;
+    const isLive = station.name === liveActive && station.state !== "completed";
+    const state = isLive ? "running" : station.state;
+    const cls = state === "completed" ? "ok" : state === "running" ? "run" : state === "failed" ? "bad" : "off";
+    const stuck = zombie && state === "running";
+    const last = station.rounds[station.rounds.length - 1];
+    const dur = last ? (last.durationMs ?? (Date.now() - new Date(last.startedAt).getTime())) : null;
+    const tokens = last && last.tokens ? fmtTokens(last.tokens.inputTokens + last.tokens.outputTokens) : "";
+    const tip = station.label + "：" + STATION_STATE_LABEL[state] +
+      (dur === null ? "" : " · " + fmtDur(dur)) +
+      (tokens === "" ? "" : " · " + tokens + " 令牌") +
+      (station.rounds.length > 1 ? " · " + station.rounds.length + " 轮" : "");
+    const note = summaryText(record, station.name);
+    svg += '<g class="pl-node ' + cls + (state === "running" ? " pulse" : "") + (stuck ? " stuck" : "") + '"><title>' + esc(tip + (note === "" ? "" : "\\n" + note)) + "</title>" +
+      '<circle cx="' + x + '" cy="' + cy + '" r="14" />' +
+      '<text x="' + x + '" y="' + (cy + 4) + '" class="pl-glyph" text-anchor="middle">' + esc(station.label[0]) + "</text>" +
+      '<text x="' + x + '" y="' + yLabel + '" class="pl-name" text-anchor="middle">' + esc(station.label) + "</text>" +
+      '<text x="' + x + '" y="' + yDur + '" class="pl-dur" text-anchor="middle">' + (dur === null ? (state === "pending" ? "" : "…") : fmtDur(dur)) +
+      (station.rounds.length > 1 ? ' <tspan class="pl-rounds">×' + station.rounds.length + "</tspan>" : "") + "</text></g>";
+  });
+  // 审批等待（未应答的审批卡 = 当前卡点，紫色）
+  const openApproval = (record.inputRequests ?? []).find((r) => r.resolvedAt === null);
+  if (openApproval) {
+    const lastOpen = [...stations].reverse().find((s) => s.state === "running" || s.state === "completed");
+    const idx = lastOpen ? stations.indexOf(lastOpen) : stations.length - 1;
+    const x = Math.min(pad + idx * step + 54, width - 30);
+    svg += '<g class="pl-wait"><title>审批卡等待中（自 ' + esc(openApproval.requestedAt) + "）</title>" +
+      '<rect x="' + (x - 12) + '" y="' + (cy - 8) + '" width="24" height="16" rx="4" />' +
+      '<text x="' + x + '" y="' + (cy + 4) + '" class="pl-glyph" text-anchor="middle">等</text></g>';
+  }
+  return '<svg viewBox="0 0 ' + width + " 110" + '" width="100%" height="110" role="img">' +
+    '<defs><marker id="backArrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">' +
+    '<path d="M0,0 L8,4 L0,8 z" /></marker></defs>' + svg + "</svg>";
+}
+
+function ganttSvg(record) {
+  const t0 = new Date(record.createdAt).getTime();
+  const t1 = Math.max(new Date(record.updatedAt).getTime(), t0 + 60000);
+  const span = t1 - t0;
+  const rows = [];
+  for (const [name] of PIPELINE) {
+    const group = stationGroups(record)[name];
+    for (const stage of group.rounds) {
+      rows.push({ label: PIPELINE.find(([n]) => n === name)[1], kind: "stage", state: stage.outcome, start: new Date(stage.startedAt).getTime(), end: stage.completedAt ? new Date(stage.completedAt).getTime() : t1, open: stage.completedAt === null });
+    }
+  }
+  for (const req of record.inputRequests ?? []) {
+    const end = req.resolvedAt ? new Date(req.resolvedAt).getTime() : t1;
+    rows.push({ label: "审批等待", kind: "wait", start: new Date(req.requestedAt).getTime(), end, open: req.resolvedAt === null });
+  }
+  if (rows.length === 0) return '<div class="muted">尚无时间轴数据。</div>';
+  const labelW = 74, barMax = 720, rowH = 22, height = rows.length * rowH + 34;
+  const x = (t) => labelW + ((t - t0) / span) * barMax;
+  let svg = '<line x1="' + labelW + '" y1="8" x2="' + (labelW + barMax) + '" y2="8" class="g-axis" />' +
+    '<text x="' + labelW + '" y="6" class="g-tick">' + clock(record.createdAt) + "</text>" +
+    '<text x="' + (labelW + barMax) + '" y="6" class="g-tick" text-anchor="end">' + clock(record.updatedAt) + "</text>";
+  rows.forEach((row, i) => {
+    const y = 18 + i * rowH;
+    const w = Math.max(x(row.end) - x(row.start), 3);
+    const cls = row.kind === "wait" ? "wait" : row.state === "completed" ? "ok" : row.open ? "run" : "bad";
+    const tip = row.label + " · " + clock(new Date(row.start).toISOString()) + " → " + (row.open ? "…" : clock(new Date(row.end).toISOString())) + " · " + fmtDur(row.end - row.start);
+    svg += '<text x="' + (labelW - 6) + '" y="' + (y + 13) + '" class="g-label" text-anchor="end">' + esc(row.label) + "</text>" +
+      '<rect x="' + x(row.start) + '" y="' + y + '" width="' + w + '" height="' + (rowH - 8) + '" rx="3" class="g-bar ' + cls + (row.open ? " pulse" : "") + '"><title>' + esc(tip) + "</title></rect>";
+  });
+  const gapNote = "站间空隙 = 编排器自身耗时";
+  return '<svg viewBox="0 0 ' + (labelW + barMax + 8) + " " + height + '" width="100%" height="' + height + '" role="img">' + svg + "</svg>" +
+    '<div class="muted">' + gapNote + "；紫段为审批等待。</div>";
+}
+
+function renderHero(run) {
+  $("hero-switch").innerHTML =
+    '<button data-view="pipeline" class="' + (heroView === "pipeline" ? "on" : "") + '">管线图</button>' +
+    '<button data-view="gantt" class="' + (heroView === "gantt" ? "on" : "") + '">甘特</button>';
+  for (const btn of $("hero-switch").querySelectorAll("button")) {
+    btn.addEventListener("click", () => { heroView = btn.dataset.view; renderHero(currentRun); });
+  }
+  $("hero").innerHTML = heroView === "pipeline" ? pipelineSvg(currentRun.record, currentRun.zombie) : ganttSvg(currentRun.record);
+}
+
+// ---------- 列表 / 详情 ----------
 let selected = null;
 let pollTimer = null;
 let liveAbort = null;
+let currentRun = null;
 
 async function fetchJSON(url) {
   const response = await fetch(url, { headers: { accept: "application/json" } });
@@ -297,15 +492,15 @@ async function fetchJSON(url) {
 function renderList(data) {
   const rows = data.runs.map((run) => {
     const r = run.record;
-    const z = run.zombie;
     const tokens = r.modelUsage.inputTokens + r.modelUsage.outputTokens;
-    return '<tr id="row-' + esc(r.sessionId) + '" class="' + (z ? "zombie" : "") + '" data-id="' + esc(r.sessionId) + '">'
+    const active = run.zombie ? (r.stages.find((s) => s.completedAt === null)?.name ?? null) : liveRowActive.get(r.sessionId) ?? null;
+    return '<tr id="row-' + esc(r.sessionId) + '" class="' + (run.zombie ? "zombie" : "") + '" data-id="' + esc(r.sessionId) + '">'
       + "<td>" + threadCell(r) + "</td>"
       + "<td>" + statusCell(r) + "</td>"
-      + '<td class="stage-dots">' + stageMarks(r) + "</td>"
+      + "<td>" + miniPipeline(r, active) + "</td>"
       + "<td>" + r.turns.started + (r.turns.failed > 0 ? ' <span title="失败轮">(' + r.turns.failed + "✗)</span>" : "") + "</td>"
       + "<td>" + fmtTokens(tokens) + "</td>"
-      + "<td>" + fmtDur(run.durationMs) + "</td>"
+      + "<td>" + fmtDur(new Date(r.updatedAt) - new Date(r.createdAt)) + "</td>"
       + "<td>" + outcomeCell(r) + "</td>"
       + '<td class="muted">' + clock(r.updatedAt) + "</td></tr>";
   });
@@ -343,22 +538,19 @@ async function refreshList() {
 }
 
 function renderDetail(run) {
+  currentRun = run;
   const r = run.record;
-  const stages = r.stages.map((stage) => {
-    const state = stage.outcome === null ? "进行中" : stage.outcome;
-    const tokens = stage.tokens === null ? "" :
-      " · " + fmtTokens(stage.tokens.inputTokens + stage.tokens.outputTokens) + " 令牌";
-    return "<div>" + clock(stage.startedAt) + " <code>" + esc(stage.name) + "</code> "
-      + esc(state) + (stage.durationMs === null ? "" : " · " + fmtDur(stage.durationMs)) + tokens + "</div>";
-  }).join("") || '<span class="muted">尚无站点动作。</span>';
+  renderHero(run);
   const inputs = r.inputRequests.map((request) => {
     const state = request.resolvedAt === null ? "未应答" : request.outcome + " @ " + clock(request.resolvedAt);
     return "<div>" + clock(request.requestedAt) + " <code>" + esc(request.kind) + "</code> " + esc(state) + "</div>";
   }).join("") || '<span class="muted">无审批卡。</span>';
   const failures = r.turnFailures.map((failure) =>
     "<div>" + clock(failure.at) + " <code>" + esc(failure.errorType) + "</code></div>").join("");
-  $("detail").innerHTML =
-    '<div class="kv">'
+  const notes = visiblePipeline(r).filter((s) => summaryText(r, s.name) !== "")
+    .map((s) => "<div><b>" + esc(s.label) + "</b> <code>" + esc(summaryText(r, s.name)) + "</code></div>").join("");
+  $("detail-kv").innerHTML =
+    "<div class=\\"kv\\">"
     + "<dt>线程</dt><dd>" + threadCell(r).replace(/<div>/g, "").replace(/<\\/div>/g, " · ") + "</dd>"
     + "<dt>会话</dt><dd><code>" + esc(r.sessionId) + "</code></dd>"
     + "<dt>状态</dt><dd>" + statusCell(r) + (r.terminal !== null ? " · " + clock(r.terminal.at) : "") + "</dd>"
@@ -368,12 +560,13 @@ function renderDetail(run) {
     + (r.prUrl !== null ? '<dt>PR</dt><dd><a href="' + esc(r.prUrl) + '" target="_blank" rel="noopener">' + esc(r.prUrl) + "</a></dd>" : "")
     + (run.zombie !== null ? "<dt>僵尸</dt><dd><b>" + esc(run.zombie.type) + "</b>（" + esc(run.zombie.detail) + "，自 " + esc(run.zombie.since) + "）</dd>" : "")
     + "</div>"
-    + "<hr><div><b>站点时间线</b></div>" + stages
+    + (notes === "" ? "" : '<div style="margin-top:0.5rem"><b>站级摘要（白名单字段）</b></div>' + notes)
     + '<div style="margin-top:0.5rem"><b>审批卡</b></div>' + inputs
     + (failures === "" ? "" : '<div style="margin-top:0.5rem"><b>失败轮</b></div>' + failures
       + (r.thread === null ? "" : '<div class="muted">错误详情以错误评论贴在 <a href="' + repoUrl + "/" + (r.thread.kind === "issue" ? "issues" : "pull") + "/" + r.thread.number + '" target="_blank" rel="noopener">该线程</a>；记录面只存错误代码（对话内容不落盘）。</div>'));
 }
 
+// ---------- 实时区（钻取层）与活动指示 ----------
 function liveLine(text) {
   const node = $("live");
   node.textContent += text + "\\n";
@@ -382,10 +575,6 @@ function liveLine(text) {
   node.scrollTop = node.scrollHeight;
 }
 
-// 活动指示：流式增量块不进日志（刷屏），但它们是"正在生成"的最强信号。
-// 二态渲染：事件在流（● 活动中）；静默超 30 秒（○ 静默中 + 已静默时长）——
-// 站点跑长工具（sandbox clone / uv sync）期间事件流真静默，只有心跳在走，
-// 静默计时由本地时钟驱动，操作者能分辨"在干活"与"死了"。
 let lastEventAt = 0;
 let activityLabel = "";
 function touchActivity(label) {
@@ -414,8 +603,6 @@ function renderActivity() {
 }
 setInterval(renderActivity, 1000);
 
-// 事件自身的时间（meta.at），渲染时钟只做兜底——回放 12 条会在连接瞬间
-// 一起到达，盖渲染时钟会全显同一时刻，读不出先后与新旧。
 function eventTime(event) {
   const at = event.meta && event.meta.at;
   return clock(typeof at === "string" ? at : new Date().toISOString());
@@ -444,7 +631,6 @@ function describeStreamEvent(event) {
     case "step.completed": return "模型步完成";
     case "step.failed": return "模型步失败";
     case "input.requested": return "审批卡出现";
-    // 流式增量块（每秒多条）不进实时区，只留生命周期边界。
     case "message.appended":
     case "reasoning.appended":
     case "reasoning.completed":
@@ -475,8 +661,26 @@ async function pump(response, onEvent) {
   }
 }
 
-// 站点跑在自己的子会话里（根流只在站点边界出声），进入站点时跟随其会话流，
-// 让长工具调用（如 sandbox 首次 uv sync）期间实时区也有动静。
+// 实时状态机（T5）：流事件即时驱动视图，不等 30 秒轮询；轮询只做收敛对账。
+const liveRowActive = new Map(); // 列表行当前站（sessionId -> station label）
+function noteActiveStation(stationTag) {
+  // 流事件的 name 是子代理 id（如 "implementer"），管线模型用工具名
+  // （"run_implementer"）——统一归一到工具名再比较。
+  liveActive = stationTag.startsWith("run_") ? stationTag : "run_" + stationTag;
+  if (selected !== null && currentRun && currentRun.record.sessionId === selected) {
+    renderHero(currentRun);
+  }
+}
+async function markStageBoundary(sessionId) {
+  // 站点边界（run_* 动作结束）立即拉一次记录对账：管线图定格不用等轮询。
+  if (selected === sessionId) {
+    await refreshDetail(sessionId);
+  }
+  liveActive = null;
+  liveRowActive.delete(sessionId);
+  if (currentRun && currentRun.record.sessionId === sessionId) renderHero(currentRun);
+}
+
 let childAbort = null;
 function closeChild() {
   if (childAbort !== null) { childAbort.abort(); childAbort = null; }
@@ -499,7 +703,6 @@ async function followChild(childSessionId, tag) {
         }
         touchActivity(tag);
       });
-      // 正常结束（站点完成，会话终态）不重连，避免对终态会话空转。
       return;
     } catch (error) {
       if (error.name === "AbortError") return;
@@ -513,13 +716,14 @@ async function followChild(childSessionId, tag) {
   }
 }
 
-// 详情数字（状态/令牌/时间线）随此刷新收敛：多窗口各自的重连史不同，
-// 定时拉取让 KV 块最多落后 30 秒，而不是各窗口各说各话。
 async function refreshDetail(id) {
   try {
     const run = await fetchJSON("/run/" + encodeURIComponent(id));
     if (selected === id) {
       renderDetail(run);
+    }
+    if (run.record.terminal !== null) {
+      liveRowActive.delete(id);
     }
     return run.record.terminal !== null;
   } catch {
@@ -534,10 +738,6 @@ async function followLive(id) {
   const pollOnce = () => refreshDetail(id);
   try {
     liveLine("—— 已接入实时流 ——");
-    // 空闲代理会在长工具期间掐断静默流（心跳之外仍可能断）：先重连（3 次、
-    // 间隔 5 秒），连败才真正降级轮询；正常结束（会话终态/服务重启）走同一条
-    // 重连路径，由 pollOnce 决定是否收手。每次连接的前 TAIL 条是回放（?tail
-    // 参数），行首标 ↩，与直播行区分——多窗口回放窗口不同是预期，不再误读。
     let failures = 0;
     while (selected === id) {
       try {
@@ -554,11 +754,14 @@ async function followLive(id) {
           if (event.type === "subagent.called" && event.data?.childSessionId) {
             const tag = event.data.name ?? "站点";
             liveLine(prefix + eventTime(event) + " → 进入站点 " + tag + "（跟随其会话流）");
+            noteActiveStation(tag);
+            liveRowActive.set(id, tag.startsWith("run_") ? tag : "run_" + tag);
             followChild(event.data.childSessionId, tag);
             return;
           }
           if (event.type === "action.result" && String(event.data?.result?.toolName ?? "").startsWith("run_")) {
             closeChild();
+            void markStageBoundary(id);
           }
           const text = describeStreamEvent(event);
           if (text !== null) liveLine(prefix + eventTime(event) + " " + text);
@@ -588,7 +791,6 @@ async function followLive(id) {
     }
   }
   if (fellBack || selected === id) {
-    // 轮询兜底：流断了或结束后，10 秒一档跟进直到终态。
     const done = await pollOnce();
     if (!done && selected === id && pollTimer === null) {
       pollTimer = setInterval(async () => {
@@ -611,8 +813,10 @@ function route() {
   $("activity").textContent = "";
   lastEventAt = 0;
   activityLabel = "";
+  liveActive = null;
   if (id === "") {
     selected = null;
+    currentRun = null;
     $("detail-view").hidden = true;
     $("list-view").hidden = false;
     return;
@@ -621,8 +825,17 @@ function route() {
   $("list-view").hidden = true;
   $("detail-view").hidden = false;
   fetchJSON("/run/" + encodeURIComponent(id))
-    .then((run) => { renderDetail(run); followLive(id); })
-    .catch(() => { $("detail").innerHTML = '<span class="muted">找不到该运行的记录（可能已被 30 天清理）。</span>'; });
+    .then((run) => {
+      // 慢响应竞态守卫：晚到的旧 run 不得覆盖当前选中，也不得抢占实时流。
+      if (selected !== id) return;
+      renderDetail(run);
+      followLive(id);
+    })
+    .catch(() => {
+      // 同一守卫盖拒绝路径：晚到的旧请求失败不得覆盖当前选中的视图。
+      if (selected !== id) return;
+      $("detail-kv").innerHTML = '<span class="muted">找不到该运行的记录（可能已被 30 天清理）。</span>';
+    });
 }
 
 $("back").addEventListener("click", () => { location.hash = ""; });
@@ -630,8 +843,8 @@ window.addEventListener("hashchange", route);
 route();
 refreshList();
 setInterval(() => { if (selected === null) refreshList(); }, 30000);
-// 详情打开时数字定时收敛（多窗口一致性），与流的生命周期解耦。
 setInterval(() => { if (selected !== null) refreshDetail(selected); }, 30000);
+
 </script>
 </body>
 </html>`;

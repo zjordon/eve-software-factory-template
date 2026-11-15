@@ -64,6 +64,20 @@ export interface ActionErrorEntry {
 }
 
 /**
+ * A station's whitelisted structured-output summary (M6-T1).
+ *
+ * @remarks
+ * Written by the `run_*` wrapper tools through {@link annotateStageSummary};
+ * the field set is owned by `agent/lib/observability/stage-summary.ts` (the
+ * whitelist). Conversation content never lands here — see that module's
+ * boundary note. Latest write per station wins (rework rounds overwrite).
+ */
+export interface StageSummary {
+  readonly at: string;
+  readonly fields: Record<string, boolean | number | string>;
+}
+
+/**
  * One factory run: the lifecycle of a root session (a labeled issue, a
  * mention, a CI-fix dispatch), as reconstructed from instrumentation events.
  *
@@ -85,6 +99,8 @@ export interface RunRecord {
   seenKeys: string[];
   readonly sessionId: string;
   stages: RunStage[];
+  /** Whitelisted station summaries keyed by station name (M6-T1). */
+  stationSummaries: Record<string, StageSummary>;
   status: "running" | "waiting" | "completed" | "failed";
   terminal: { at: string; errorType: string } | null;
   thread: RunThreadRef | null;
@@ -212,6 +228,7 @@ const freshRecord = (sessionId: string): RunRecord => ({
   seenKeys: [],
   sessionId,
   stages: [],
+  stationSummaries: {},
   status: "running",
   terminal: null,
   thread: null,
@@ -340,6 +357,36 @@ export const annotateRun = (
     }
   });
 
+/**
+ * Record one station's whitelisted summary on the run (M6-T1).
+ *
+ * @remarks
+ * Called best-effort from the `run_*` wrapper tools with the projection from
+ * `stageSummaryFor`; latest write per station wins. Failures are swallowed:
+ * the wrapper must never fail because the panel missed a summary.
+ */
+export const annotateStageSummary = (
+  sessionId: string,
+  station: string,
+  fields: Record<string, boolean | number | string>
+): Promise<void> =>
+  enqueue(sessionId, async () => {
+    try {
+      const record = (await readRecord(sessionId)) ?? freshRecord(sessionId);
+      record.stationSummaries = {
+        ...record.stationSummaries,
+        [station]: { at: nowIso(), fields },
+      };
+      record.updatedAt = nowIso();
+      await writeRecord(record);
+    } catch (error) {
+      console.error(
+        `run-store: failed to annotate stage summary for ${sessionId}/${station}`,
+        error
+      );
+    }
+  });
+
 /** Read one run record, or null when no record exists (yet). */
 export const getRun = (sessionId: string): Promise<RunRecord | null> =>
   enqueue(sessionId, () => readRecord(sessionId)).catch(() => null);
@@ -440,9 +487,11 @@ export const dailyTotals = (records: readonly RunRecord[]): DailyTotal[] => {
  * @remarks
  * Approval hang: an input request (usually an approval card) never resolved
  * while the session sits non-terminal past the threshold. Error loop:
- * consecutive turn failures at or above the streak threshold, typed by the
- * most recent action error code (turn-level error details are content and are
- * not recorded under the metadata-only policy).
+ * consecutive turn failures at or above the streak threshold while the run is
+ * still live (a reset/retired session's failure history is record, not an
+ * active zombie), typed by the most recent action error code (turn-level
+ * error details are content and are not recorded under the metadata-only
+ * policy).
  */
 export function detectZombie(record: RunRecord): ZombieFlag | null {
   if (record.terminal === null) {
@@ -459,7 +508,7 @@ export function detectZombie(record: RunRecord): ZombieFlag | null {
       };
     }
   }
-  if (record.failureStreak >= ERROR_LOOP_STREAK) {
+  if (record.terminal === null && record.failureStreak >= ERROR_LOOP_STREAK) {
     const last = record.turnFailures.at(-1);
     return {
       detail: `${record.failureStreak} consecutive failed turns${

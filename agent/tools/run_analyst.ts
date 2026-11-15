@@ -1,5 +1,6 @@
 import { defineWorkflowTool } from "eve/tools";
 import { z } from "zod";
+import { recordStageSummary } from "../lib/observability/stage-summary.js";
 import { ANALYST_OUTPUT_SCHEMA } from "../lib/stations/schemas.js";
 
 /**
@@ -19,10 +20,12 @@ export default defineWorkflowTool({
     "save its own deep supporting detail as an analysis artifact and return the id.",
   async execute({ message }, ctx) {
     "use workflow";
-    return await ctx.agent("analyst", {
+    const output = await ctx.agent("analyst", {
       message,
       outputSchema: ANALYST_OUTPUT_SCHEMA,
     });
+    await recordStageSummary(ctx.session.id, "analyst", output);
+    return output;
   },
   inputSchema: z.object({
     message: z

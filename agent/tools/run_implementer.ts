@@ -1,5 +1,6 @@
 import { defineWorkflowTool } from "eve/tools";
 import { z } from "zod";
+import { recordStageSummary } from "../lib/observability/stage-summary.js";
 import { IMPLEMENTER_OUTPUT_SCHEMA } from "../lib/stations/schemas.js";
 
 /**
@@ -20,10 +21,12 @@ export default defineWorkflowTool({
     "findings.",
   async execute({ message }, ctx) {
     "use workflow";
-    return await ctx.agent("implementer", {
+    const output = await ctx.agent("implementer", {
       message,
       outputSchema: IMPLEMENTER_OUTPUT_SCHEMA,
     });
+    await recordStageSummary(ctx.session.id, "implementer", output);
+    return output;
   },
   inputSchema: z.object({
     message: z
