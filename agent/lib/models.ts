@@ -36,6 +36,9 @@ interface StreamTrace {
   sawToolUse: boolean;
 }
 
+/** Statuses whose Response constructor rejects a non-null body. */
+const NULL_BODY_STATUSES = new Set([101, 204, 205, 304]);
+
 const requestPath = (input: RequestInfo | URL): string => {
   const toPath = (value: string): string => {
     try {
@@ -52,6 +55,19 @@ const requestPath = (input: RequestInfo | URL): string => {
   }
   const { url } = input;
   return toPath(url);
+};
+
+/** Log a natural stream end that never saw a terminal event. */
+const logIfUnterminated = (
+  trace: StreamTrace,
+  startedAt: number,
+  path: string
+): void => {
+  if (!trace.sawTerminal) {
+    console.error(
+      `zhipu-fetch: stream ended without a terminal event after ${Date.now() - startedAt}ms ${path}: ${trace.bytes}B, tool_use seen: ${trace.sawToolUse}, event types: ${trace.eventTypes.slice(-12).join(" > ") || "(none parsed)"}`
+    );
+  }
 };
 
 /**
@@ -89,9 +105,11 @@ const trackedBody = (
 ): ReadableStream<Uint8Array> => {
   const reader = body.getReader();
   let tail = "";
+  let cancelled = false;
   const decoder = new TextDecoder();
   return new ReadableStream<Uint8Array>({
     async cancel(reason) {
+      cancelled = true;
       console.error(
         `zhipu-fetch: stream cancelled by consumer after ${Date.now() - startedAt}ms ${path}: ${trace.bytes}B, terminal seen: ${trace.sawTerminal}, last events: ${trace.eventTypes.slice(-6).join(" > ") || "(none)"}, reason: ${String(reason).slice(0, 120)}`
       );
@@ -110,19 +128,29 @@ const trackedBody = (
         return;
       }
       if (result.done) {
-        if (!trace.sawTerminal) {
-          console.error(
-            `zhipu-fetch: stream ended without a terminal event after ${Date.now() - startedAt}ms ${path}: ${trace.bytes}B, tool_use seen: ${trace.sawToolUse}, event types: ${trace.eventTypes.slice(-12).join(" > ") || "(none parsed)"}`
-          );
+        // The cancel handler resolves a pending read as done; that arrival
+        // belongs to the cancel path, not a natural end.
+        if (tail.length > 0) {
+          trackSseLine(tail, trace);
         }
-        controller.close();
+        if (!cancelled) {
+          logIfUnterminated(trace, startedAt, path);
+          controller.close();
+        }
         return;
       }
       const { value } = result;
       trace.bytes += value.byteLength;
       controller.enqueue(value);
-      tail = (tail + decoder.decode(value, { stream: true })).slice(-4096);
-      for (const line of tail.split("\n")) {
+      // Complete lines fold into the trace once; only the trailing partial
+      // line carries over (bounded, for a pathological unterminated line).
+      tail += decoder.decode(value, { stream: true });
+      const lines = tail.split("\n");
+      tail = lines.pop() ?? "";
+      if (tail.length > 4096) {
+        tail = tail.slice(-4096);
+      }
+      for (const line of lines) {
         trackSseLine(line, trace);
       }
     },
@@ -144,11 +172,14 @@ const modelFetch: typeof fetch = async (input, init) => {
       console.error(
         `zhipu-fetch: HTTP ${response.status} after ${Date.now() - startedAt}ms ${path} (request ${requestBytes ?? "?"}B): ${body.slice(0, 500)}`
       );
-      return new Response(body, {
-        headers,
-        status: response.status,
-        statusText: response.statusText,
-      });
+      return new Response(
+        NULL_BODY_STATUSES.has(response.status) ? null : body,
+        {
+          headers,
+          status: response.status,
+          statusText: response.statusText,
+        }
+      );
     }
     if (response.body === null) {
       return response;
