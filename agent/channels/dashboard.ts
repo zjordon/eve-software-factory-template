@@ -825,7 +825,12 @@ function route() {
   $("list-view").hidden = true;
   $("detail-view").hidden = false;
   fetchJSON("/run/" + encodeURIComponent(id))
-    .then((run) => { renderDetail(run); followLive(id); })
+    .then((run) => {
+      // 慢响应竞态守卫：晚到的旧 run 不得覆盖当前选中，也不得抢占实时流。
+      if (selected !== id) return;
+      renderDetail(run);
+      followLive(id);
+    })
     .catch(() => { $("detail-kv").innerHTML = '<span class="muted">找不到该运行的记录（可能已被 30 天清理）。</span>'; });
 }
 
