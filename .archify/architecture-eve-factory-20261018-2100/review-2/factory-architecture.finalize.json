@@ -1,0 +1,434 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "architecture",
+  "quality": "showcase",
+  "startedAt": "2026-10-18T01:48:08.410Z",
+  "specification": {
+    "path": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\candidate.json",
+    "sha256": "d628796a36402816ff65066689140c66f20bd245b4e26bb7548eec5a5801d432",
+    "bytes": 9210
+  },
+  "artifact": {
+    "path": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+    "sha256": "21e624e698658491514bf0347e9cb5971ab336ad571083db2a597022b480307a",
+    "bytes": 847501
+  },
+  "stages": {
+    "validate": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": null,
+      "execution": "embedded-in-deliver",
+      "command": [
+        "D:\\soft\\nodejs\\node.exe",
+        "C:\\Users\\ZhuanZ\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "deliver",
+        "architecture",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\candidate.json",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "validate",
+        "specification": {
+          "sha256": "d628796a36402816ff65066689140c66f20bd245b4e26bb7548eec5a5801d432",
+          "bytes": 9210
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "deliver": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 735,
+      "command": [
+        "D:\\soft\\nodejs\\node.exe",
+        "C:\\Users\\ZhuanZ\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "deliver",
+        "architecture",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\candidate.json",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "receiptId": "7b202e6c-164e-4e01-a7c3-d95ce3e47667",
+        "ok": true,
+        "command": "deliver",
+        "type": "architecture",
+        "input": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\candidate.json",
+        "output": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+        "specification": {
+          "sha256": "d628796a36402816ff65066689140c66f20bd245b4e26bb7548eec5a5801d432",
+          "bytes": 9210
+        },
+        "artifact": {
+          "sha256": "21e624e698658491514bf0347e9cb5971ab336ad571083db2a597022b480307a",
+          "bytes": 847501
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        },
+        "evidence": {
+          "verified": true,
+          "repository": "https://github.com/zjordon/eve-software-factory-template",
+          "revision": "0d817407f91e35de7aa544408593382dc58629d7",
+          "references": 17
+        },
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      }
+    },
+    "check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 209,
+      "command": [
+        "D:\\soft\\nodejs\\node.exe",
+        "C:\\Users\\ZhuanZ\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "check",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+        "--require-provenance"
+      ],
+      "receipt": {
+        "ok": true,
+        "file": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+        "artifact": {
+          "sha256": "21e624e698658491514bf0347e9cb5971ab336ad571083db2a597022b480307a",
+          "bytes": 847501
+        },
+        "checks": [
+          {
+            "name": "single_svg",
+            "ok": true,
+            "details": [
+              "found 1 <svg> block(s)"
+            ]
+          },
+          {
+            "name": "finite_svg",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "orthogonal_arrows",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "label_route_clearance",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_crossings",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_corridors",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "container_border_runs",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "route_rhythm",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "legend_clearance",
+            "ok": true,
+            "details": []
+          }
+        ],
+        "composition": {
+          "schemaVersion": 1,
+          "profile": "showcase",
+          "status": "pass",
+          "summary": {
+            "errors": 0,
+            "warnings": 0
+          },
+          "metrics": {
+            "properCrossings": 0,
+            "resolvedCrossovers": 2,
+            "ambiguousCorridors": 0,
+            "arrowheadCollisions": 0,
+            "containerBorderRuns": 0,
+            "labelRouteClearanceIssues": 0,
+            "labelCanvasOverflowIssues": 0,
+            "minLabelRouteClearance": 6,
+            "desktopReadabilityIssues": 0,
+            "viewportHeightIssues": 0,
+            "minProjectedNodeTextPx": 6.161945636623749,
+            "maxBends": 2,
+            "routesOverSuggestedBends": 0,
+            "maxStretch": 1,
+            "routesOverSuggestedStretch": 0,
+            "minSegmentPx": 19.5,
+            "minInteriorSegmentPx": 34,
+            "shortSegmentCount": 0,
+            "shortEndpointSegmentCount": 0,
+            "shortInteriorSegmentCount": 0,
+            "microSegmentCount": 0
+          },
+          "suggestedLimits": {
+            "bendsPerRelationship": 2,
+            "stretch": 1.35,
+            "segmentPx": 16,
+            "microSegmentPx": 8
+          },
+          "routeReview": {
+            "crossings": [
+              {
+                "left": {
+                  "id": "runAnalyst",
+                  "from": "orchestrator",
+                  "to": "analyst",
+                  "label": "run_analyst",
+                  "collectionIndex": 5,
+                  "artifactIndex": 6
+                },
+                "right": {
+                  "id": "runReviewer",
+                  "from": "orchestrator",
+                  "to": "reviewer",
+                  "label": "run_reviewer",
+                  "collectionIndex": 6,
+                  "artifactIndex": 7
+                },
+                "point": [
+                  512,
+                  425.99999999999994
+                ],
+                "sharedNode": "orchestrator"
+              },
+              {
+                "left": {
+                  "id": "runAnalyst",
+                  "from": "orchestrator",
+                  "to": "analyst",
+                  "label": "run_analyst",
+                  "collectionIndex": 5,
+                  "artifactIndex": 6
+                },
+                "right": {
+                  "id": "runImplementer",
+                  "from": "orchestrator",
+                  "to": "implementer",
+                  "label": "run_implementer",
+                  "collectionIndex": 7,
+                  "artifactIndex": 8
+                },
+                "point": [
+                  512,
+                  418
+                ],
+                "sharedNode": "orchestrator"
+              }
+            ],
+            "detours": []
+          },
+          "leadingSpace": {
+            "measured": true,
+            "emptyTopPx": 40,
+            "emptyTopRatio": 0.045,
+            "occupiedTop": 40,
+            "viewBoxTop": 0,
+            "canvasHeight": 894,
+            "typicalNodeHeight": 80,
+            "reviewSuggested": false
+          },
+          "desktopReadability": {
+            "budgetBasis": "recognized-declared-wide",
+            "readerContract": "declared-wide-v1",
+            "availableDiagramWidth": 1346,
+            "actualBudgetPx": 1346,
+            "actualReaderWidth": 1376,
+            "desiredReaderWidth": 1428,
+            "viewportCap": 1376,
+            "limit": "viewport-cap",
+            "requestedTargetPx": 7.5,
+            "requestedTargetMet": false,
+            "hardFloorPx": 6,
+            "hardFloorMet": true,
+            "minimumOwner": {
+              "kind": "node",
+              "id": "zhipu"
+            },
+            "minimumSourceTextPx": 6.4,
+            "minimumProjectedTextPx": 6.161945636623749,
+            "semanticTextCount": 46
+          },
+          "issues": []
+        },
+        "provenance": "current",
+        "deliveryReceiptId": "7b202e6c-164e-4e01-a7c3-d95ce3e47667"
+      }
+    },
+    "browser-check": {
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 48,
+      "command": [
+        "D:\\soft\\nodejs\\node.exe",
+        "C:\\Users\\ZhuanZ\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "browser-check",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+        "--json",
+        "--require-provenance",
+        "--out-dir",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2"
+      ],
+      "execution": "in-process",
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": false,
+        "command": "browser-check",
+        "evidenceKind": "automated-browser",
+        "status": "fail",
+        "visualReview": "not-requested",
+        "provenance": "current",
+        "deliveryReceiptId": "7b202e6c-164e-4e01-a7c3-d95ce3e47667",
+        "artifact": {
+          "path": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+          "sha256": "21e624e698658491514bf0347e9cb5971ab336ad571083db2a597022b480307a",
+          "bytes": 847501
+        },
+        "state": {
+          "detail": "read",
+          "motion": "still"
+        },
+        "chrome": {
+          "status": "not-checked",
+          "executable": null
+        },
+        "diagnostics": [
+          {
+            "code": "viewer/evidence-path-conflict",
+            "severity": "error",
+            "message": "browser-check will not replace the existing unowned evidence path \"D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2\\factory-architecture.browser-check.json\".",
+            "subject": {
+              "artifact": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+              "evidencePath": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2\\factory-architecture.browser-check.json"
+            },
+            "evidence": {
+              "reason": {
+                "code": "ownership-artifact-mismatch"
+              }
+            },
+            "supportedFixes": [
+              "move the conflicting file aside, or choose a separate --out-dir, then rerun browser-check"
+            ]
+          }
+        ],
+        "containment": {
+          "status": "fail",
+          "policy": "fit-or-reader-declared-readable-vertical-scroll",
+          "viewports": []
+        },
+        "themeStates": {
+          "status": "fail",
+          "viewports": []
+        },
+        "readability": {
+          "status": "fail",
+          "minimumProjectedNodeTextPx": 6,
+          "viewports": []
+        },
+        "viewerChrome": {
+          "status": "fail",
+          "viewports": []
+        },
+        "captures": {
+          "status": "not-requested",
+          "screenshots": [],
+          "contactSheet": null
+        },
+        "sidecars": {
+          "directory": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2",
+          "receipt": "factory-architecture.browser-check.json",
+          "files": []
+        },
+        "error": "browser-check will not replace the existing unowned evidence path \"D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2\\factory-architecture.browser-check.json\"."
+      }
+    }
+  },
+  "diagnostics": [
+    {
+      "code": "viewer/evidence-path-conflict",
+      "severity": "error",
+      "message": "browser-check will not replace the existing unowned evidence path \"D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2\\factory-architecture.browser-check.json\".",
+      "subject": {
+        "artifact": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+        "evidencePath": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2\\factory-architecture.browser-check.json"
+      },
+      "evidence": {
+        "reason": {
+          "code": "ownership-artifact-mismatch"
+        }
+      },
+      "supportedFixes": [
+        "move the conflicting file aside, or choose a separate --out-dir, then rerun browser-check"
+      ]
+    }
+  ],
+  "evidence": {
+    "receipt": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2\\factory-architecture.finalize.json",
+    "summaryReceipt": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2\\factory-architecture.finalize-summary.json",
+    "browserCheckReceipt": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2\\factory-architecture.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "failedStage": "browser-check",
+  "finishedAt": "2026-10-18T01:48:09.904Z",
+  "durationMs": 1493,
+  "update": {
+    "status": "current",
+    "installedVersion": "3.1.0",
+    "availableVersion": "3.1.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-18T01:04:10.683Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  }
+}

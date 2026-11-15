@@ -1,0 +1,1019 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "architecture",
+  "quality": "showcase",
+  "startedAt": "2026-10-18T01:48:52.425Z",
+  "specification": {
+    "path": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\candidate.json",
+    "sha256": "54f43d02438ede7dde9039aebf7d900506c88e167f7a0e19a12625426790317e",
+    "bytes": 9188
+  },
+  "artifact": {
+    "path": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+    "sha256": "ca640fc7bfa3b9ec2d5e5b66106850ac9d3738abf325a143d8fc9c8f505b6a8f",
+    "bytes": 847729
+  },
+  "stages": {
+    "validate": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": null,
+      "execution": "embedded-in-deliver",
+      "command": [
+        "D:\\soft\\nodejs\\node.exe",
+        "C:\\Users\\ZhuanZ\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "deliver",
+        "architecture",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\candidate.json",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "validate",
+        "specification": {
+          "sha256": "54f43d02438ede7dde9039aebf7d900506c88e167f7a0e19a12625426790317e",
+          "bytes": 9188
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "deliver": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 766,
+      "command": [
+        "D:\\soft\\nodejs\\node.exe",
+        "C:\\Users\\ZhuanZ\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "deliver",
+        "architecture",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\candidate.json",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "receiptId": "1173c9e8-3b36-4820-b4a9-3e5ee9799a5b",
+        "ok": true,
+        "command": "deliver",
+        "type": "architecture",
+        "input": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\candidate.json",
+        "output": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+        "specification": {
+          "sha256": "54f43d02438ede7dde9039aebf7d900506c88e167f7a0e19a12625426790317e",
+          "bytes": 9188
+        },
+        "artifact": {
+          "sha256": "ca640fc7bfa3b9ec2d5e5b66106850ac9d3738abf325a143d8fc9c8f505b6a8f",
+          "bytes": 847729
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        },
+        "evidence": {
+          "verified": true,
+          "repository": "https://github.com/zjordon/eve-software-factory-template",
+          "revision": "0d817407f91e35de7aa544408593382dc58629d7",
+          "references": 17
+        },
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      }
+    },
+    "check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 193,
+      "command": [
+        "D:\\soft\\nodejs\\node.exe",
+        "C:\\Users\\ZhuanZ\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "check",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+        "--require-provenance"
+      ],
+      "receipt": {
+        "ok": true,
+        "file": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+        "artifact": {
+          "sha256": "ca640fc7bfa3b9ec2d5e5b66106850ac9d3738abf325a143d8fc9c8f505b6a8f",
+          "bytes": 847729
+        },
+        "checks": [
+          {
+            "name": "single_svg",
+            "ok": true,
+            "details": [
+              "found 1 <svg> block(s)"
+            ]
+          },
+          {
+            "name": "finite_svg",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "orthogonal_arrows",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "label_route_clearance",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_crossings",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_corridors",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "container_border_runs",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "route_rhythm",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "legend_clearance",
+            "ok": true,
+            "details": []
+          }
+        ],
+        "composition": {
+          "schemaVersion": 1,
+          "profile": "showcase",
+          "status": "pass",
+          "summary": {
+            "errors": 0,
+            "warnings": 0
+          },
+          "metrics": {
+            "properCrossings": 0,
+            "resolvedCrossovers": 1,
+            "ambiguousCorridors": 0,
+            "arrowheadCollisions": 0,
+            "containerBorderRuns": 0,
+            "labelRouteClearanceIssues": 0,
+            "labelCanvasOverflowIssues": 0,
+            "minLabelRouteClearance": 4.8,
+            "desktopReadabilityIssues": 0,
+            "viewportHeightIssues": 0,
+            "minProjectedNodeTextPx": 6.161945636623749,
+            "maxBends": 2,
+            "routesOverSuggestedBends": 0,
+            "maxStretch": 1,
+            "routesOverSuggestedStretch": 0,
+            "minSegmentPx": 19.4,
+            "minInteriorSegmentPx": 19.4,
+            "shortSegmentCount": 0,
+            "shortEndpointSegmentCount": 0,
+            "shortInteriorSegmentCount": 0,
+            "microSegmentCount": 0
+          },
+          "suggestedLimits": {
+            "bendsPerRelationship": 2,
+            "stretch": 1.35,
+            "segmentPx": 16,
+            "microSegmentPx": 8
+          },
+          "routeReview": {
+            "crossings": [
+              {
+                "left": {
+                  "id": "runClassifier",
+                  "from": "orchestrator",
+                  "to": "classifier",
+                  "label": "run_classifier",
+                  "collectionIndex": 4,
+                  "artifactIndex": 5
+                },
+                "right": {
+                  "id": "runAnalyst",
+                  "from": "orchestrator",
+                  "to": "analyst",
+                  "label": "run_analyst",
+                  "collectionIndex": 5,
+                  "artifactIndex": 6
+                },
+                "point": [
+                  337.30000000000007,
+                  389.04545454545456
+                ],
+                "sharedNode": "orchestrator"
+              }
+            ],
+            "detours": []
+          },
+          "leadingSpace": {
+            "measured": true,
+            "emptyTopPx": 40,
+            "emptyTopRatio": 0.045,
+            "occupiedTop": 40,
+            "viewBoxTop": 0,
+            "canvasHeight": 894,
+            "typicalNodeHeight": 80,
+            "reviewSuggested": false
+          },
+          "desktopReadability": {
+            "budgetBasis": "recognized-declared-wide",
+            "readerContract": "declared-wide-v1",
+            "availableDiagramWidth": 1346,
+            "actualBudgetPx": 1346,
+            "actualReaderWidth": 1376,
+            "desiredReaderWidth": 1428,
+            "viewportCap": 1376,
+            "limit": "viewport-cap",
+            "requestedTargetPx": 7.5,
+            "requestedTargetMet": false,
+            "hardFloorPx": 6,
+            "hardFloorMet": true,
+            "minimumOwner": {
+              "kind": "node",
+              "id": "zhipu"
+            },
+            "minimumSourceTextPx": 6.4,
+            "minimumProjectedTextPx": 6.161945636623749,
+            "semanticTextCount": 46
+          },
+          "issues": []
+        },
+        "provenance": "current",
+        "deliveryReceiptId": "1173c9e8-3b36-4820-b4a9-3e5ee9799a5b"
+      }
+    },
+    "browser-check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 2101,
+      "command": [
+        "D:\\soft\\nodejs\\node.exe",
+        "C:\\Users\\ZhuanZ\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "browser-check",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+        "--json",
+        "--require-provenance",
+        "--out-dir",
+        "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-4"
+      ],
+      "execution": "in-process",
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "browser-check",
+        "evidenceKind": "automated-browser",
+        "status": "pass",
+        "visualReview": "not-requested",
+        "provenance": "current",
+        "deliveryReceiptId": "1173c9e8-3b36-4820-b4a9-3e5ee9799a5b",
+        "artifact": {
+          "path": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+          "sha256": "ca640fc7bfa3b9ec2d5e5b66106850ac9d3738abf325a143d8fc9c8f505b6a8f",
+          "bytes": 847729
+        },
+        "state": {
+          "detail": "read",
+          "motion": "still"
+        },
+        "chrome": {
+          "status": "available",
+          "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+        },
+        "diagnostics": [],
+        "containment": {
+          "status": "pass",
+          "policy": "fit-or-reader-declared-readable-vertical-scroll",
+          "viewports": [
+            {
+              "width": 1440,
+              "height": 900,
+              "theme": "light",
+              "innerWidth": 1440,
+              "innerHeight": 900,
+              "scrollWidth": 1440,
+              "scrollHeight": 1003,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1376,
+              "diagramWidth": 1346,
+              "pageComposition": {
+                "bodyPaddingPx": 12,
+                "headerPx": 52,
+                "diagramChromePx": 78,
+                "svgPx": 861,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1398,
+              "minimumProjectedNodeTextPx": 6.161945636623749,
+              "minimumProjectedNonEdgeTextPx": 6.161945636623749,
+              "minimumProjectedEdgeTextPx": 7.702432045779685,
+              "minimumProjectedNodeText": "glm-5.3 / glm-5.3-flash · Anthropic 兼容端点",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "zhipu"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1600,
+              "height": 1000,
+              "theme": "light",
+              "innerWidth": 1600,
+              "innerHeight": 1000,
+              "scrollWidth": 1600,
+              "scrollHeight": 1102,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1428,
+              "diagramWidth": 1398,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 60,
+                "diagramChromePx": 84,
+                "svgPx": 894,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1398,
+              "minimumProjectedNodeTextPx": 6.4,
+              "minimumProjectedNonEdgeTextPx": 6.4,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "glm-5.3 / glm-5.3-flash · Anthropic 兼容端点",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "zhipu"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1920,
+              "height": 1080,
+              "theme": "light",
+              "innerWidth": 1920,
+              "innerHeight": 1080,
+              "scrollWidth": 1920,
+              "scrollHeight": 1102,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1428,
+              "diagramWidth": 1398,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 60,
+                "diagramChromePx": 84,
+                "svgPx": 894,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1398,
+              "minimumProjectedNodeTextPx": 6.4,
+              "minimumProjectedNonEdgeTextPx": 6.4,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "glm-5.3 / glm-5.3-flash · Anthropic 兼容端点",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "zhipu"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "theme": "light",
+              "innerWidth": 2048,
+              "innerHeight": 1320,
+              "scrollWidth": 2048,
+              "scrollHeight": 1320,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1742,
+              "diagramWidth": 1692,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 68,
+                "diagramChromePx": 94,
+                "svgPx": 1082,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1398,
+              "minimumProjectedNodeTextPx": 6.4,
+              "minimumProjectedNonEdgeTextPx": 6.4,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "glm-5.3 / glm-5.3-flash · Anthropic 兼容端点",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "zhipu"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 44,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            }
+          ]
+        },
+        "themeStates": {
+          "status": "pass",
+          "viewports": [
+            {
+              "width": 1440,
+              "height": 900,
+              "requestedTheme": "light",
+              "resolvedTheme": "light",
+              "ok": true
+            },
+            {
+              "width": 1600,
+              "height": 1000,
+              "requestedTheme": "light",
+              "resolvedTheme": "light",
+              "ok": true
+            },
+            {
+              "width": 1920,
+              "height": 1080,
+              "requestedTheme": "light",
+              "resolvedTheme": "light",
+              "ok": true
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "requestedTheme": "light",
+              "resolvedTheme": "light",
+              "ok": true
+            },
+            {
+              "width": 1440,
+              "height": 900,
+              "requestedTheme": "dark",
+              "resolvedTheme": "dark",
+              "ok": true
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "requestedTheme": "dark",
+              "resolvedTheme": "dark",
+              "ok": true
+            }
+          ]
+        },
+        "readability": {
+          "status": "pass",
+          "minimumProjectedNodeTextPx": 6,
+          "viewports": [
+            {
+              "width": 1440,
+              "height": 900,
+              "theme": "light",
+              "innerWidth": 1440,
+              "innerHeight": 900,
+              "scrollWidth": 1440,
+              "scrollHeight": 1003,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1376,
+              "diagramWidth": 1346,
+              "pageComposition": {
+                "bodyPaddingPx": 12,
+                "headerPx": 52,
+                "diagramChromePx": 78,
+                "svgPx": 861,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1398,
+              "minimumProjectedNodeTextPx": 6.161945636623749,
+              "minimumProjectedNonEdgeTextPx": 6.161945636623749,
+              "minimumProjectedEdgeTextPx": 7.702432045779685,
+              "minimumProjectedNodeText": "glm-5.3 / glm-5.3-flash · Anthropic 兼容端点",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "zhipu"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1600,
+              "height": 1000,
+              "theme": "light",
+              "innerWidth": 1600,
+              "innerHeight": 1000,
+              "scrollWidth": 1600,
+              "scrollHeight": 1102,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1428,
+              "diagramWidth": 1398,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 60,
+                "diagramChromePx": 84,
+                "svgPx": 894,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1398,
+              "minimumProjectedNodeTextPx": 6.4,
+              "minimumProjectedNonEdgeTextPx": 6.4,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "glm-5.3 / glm-5.3-flash · Anthropic 兼容端点",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "zhipu"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1920,
+              "height": 1080,
+              "theme": "light",
+              "innerWidth": 1920,
+              "innerHeight": 1080,
+              "scrollWidth": 1920,
+              "scrollHeight": 1102,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1428,
+              "diagramWidth": 1398,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 60,
+                "diagramChromePx": 84,
+                "svgPx": 894,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1398,
+              "minimumProjectedNodeTextPx": 6.4,
+              "minimumProjectedNonEdgeTextPx": 6.4,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "glm-5.3 / glm-5.3-flash · Anthropic 兼容端点",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "zhipu"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "theme": "light",
+              "innerWidth": 2048,
+              "innerHeight": 1320,
+              "scrollWidth": 2048,
+              "scrollHeight": 1320,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1742,
+              "diagramWidth": 1692,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 68,
+                "diagramChromePx": 94,
+                "svgPx": 1082,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1398,
+              "minimumProjectedNodeTextPx": 6.4,
+              "minimumProjectedNonEdgeTextPx": 6.4,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "glm-5.3 / glm-5.3-flash · Anthropic 兼容端点",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "zhipu"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 44,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            }
+          ]
+        },
+        "viewerChrome": {
+          "status": "pass",
+          "viewports": [
+            {
+              "width": 1440,
+              "height": 900,
+              "theme": "light",
+              "innerWidth": 1440,
+              "innerHeight": 900,
+              "scrollWidth": 1440,
+              "scrollHeight": 1003,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1376,
+              "diagramWidth": 1346,
+              "pageComposition": {
+                "bodyPaddingPx": 12,
+                "headerPx": 52,
+                "diagramChromePx": 78,
+                "svgPx": 861,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1398,
+              "minimumProjectedNodeTextPx": 6.161945636623749,
+              "minimumProjectedNonEdgeTextPx": 6.161945636623749,
+              "minimumProjectedEdgeTextPx": 7.702432045779685,
+              "minimumProjectedNodeText": "glm-5.3 / glm-5.3-flash · Anthropic 兼容端点",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "zhipu"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1600,
+              "height": 1000,
+              "theme": "light",
+              "innerWidth": 1600,
+              "innerHeight": 1000,
+              "scrollWidth": 1600,
+              "scrollHeight": 1102,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1428,
+              "diagramWidth": 1398,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 60,
+                "diagramChromePx": 84,
+                "svgPx": 894,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1398,
+              "minimumProjectedNodeTextPx": 6.4,
+              "minimumProjectedNonEdgeTextPx": 6.4,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "glm-5.3 / glm-5.3-flash · Anthropic 兼容端点",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "zhipu"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1920,
+              "height": 1080,
+              "theme": "light",
+              "innerWidth": 1920,
+              "innerHeight": 1080,
+              "scrollWidth": 1920,
+              "scrollHeight": 1102,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1428,
+              "diagramWidth": 1398,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 60,
+                "diagramChromePx": 84,
+                "svgPx": 894,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1398,
+              "minimumProjectedNodeTextPx": 6.4,
+              "minimumProjectedNonEdgeTextPx": 6.4,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "glm-5.3 / glm-5.3-flash · Anthropic 兼容端点",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "zhipu"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "theme": "light",
+              "innerWidth": 2048,
+              "innerHeight": 1320,
+              "scrollWidth": 2048,
+              "scrollHeight": 1320,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1742,
+              "diagramWidth": 1692,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 68,
+                "diagramChromePx": 94,
+                "svgPx": 1082,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1398,
+              "minimumProjectedNodeTextPx": 6.4,
+              "minimumProjectedNonEdgeTextPx": 6.4,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "glm-5.3 / glm-5.3-flash · Anthropic 兼容端点",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "zhipu"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 44,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            }
+          ]
+        },
+        "captures": {
+          "status": "not-requested",
+          "screenshots": [],
+          "contactSheet": null
+        },
+        "sidecars": {
+          "directory": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-4",
+          "receipt": "factory-architecture.browser-check.json",
+          "files": []
+        }
+      }
+    }
+  },
+  "diagnostics": [],
+  "evidence": {
+    "receipt": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-4\\factory-architecture.finalize.json",
+    "summaryReceipt": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-4\\factory-architecture.finalize-summary.json",
+    "browserCheckReceipt": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-4\\factory-architecture.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "finishedAt": "2026-10-18T01:48:56.115Z",
+  "durationMs": 3690,
+  "update": {
+    "status": "current",
+    "installedVersion": "3.1.0",
+    "availableVersion": "3.1.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-18T01:04:10.683Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  }
+}

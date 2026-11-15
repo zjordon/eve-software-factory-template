@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\candidate.json",
+    "sha256": "0c3d7b4fd75c8e440ef1b5408f49cebf9b143c182fe4529e3df1543e86279e04",
+    "bytes": 11696
+  },
+  "artifact": {
+    "path": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\factory-architecture.html",
+    "sha256": "2f7e47441d8ae40527dc5641b2288e05a2f649b03c6932c6eb99122c0d8527ca",
+    "bytes": 859534
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\review-3\\factory-architecture.finalize.json",
+    "summaryReceipt": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\review-3\\factory-architecture.finalize-summary.json",
+    "browserCheckReceipt": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\review-3\\factory-architecture.browser-check.json"
+  },
+  "update": {
+    "status": "update_available",
+    "installedVersion": "3.1.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.2.0",
+    "severity": "normal",
+    "checkedAt": "2026-11-15T01:53:12.734Z",
+    "source": "cache",
+    "noticeRequired": true,
+    "noticeText": "Archify update: 3.1.0 → 3.2.0. A previous check at 2026-11-15T01:53:12.734Z found a newer release. Release notes: https://github.com/tt-a1i/archify/releases/tag/v3.2.0. The installed Skill has not changed; ask to snooze or ignore this reminder.",
+    "eventKey": "archify@sha256:70e210265c59f24dcbdf2a502ff671104b5454e7ee7d3554aecd86bad32384f5"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 5459,
+  "visualReviewRecommendation": {
+    "action": "inspect-route-readability",
+    "signals": {
+      "resolvedCrossovers": 2,
+      "routesOverSuggestedBends": 2,
+      "routesOverSuggestedStretch": 1
+    },
+    "reason": "Automated gates passed, but crossings or detours still need perceptual review before claiming visual quality.",
+    "affectedRoutes": {
+      "crossings": [
+        {
+          "left": {
+            "id": "observe",
+            "from": "orchestrator",
+            "to": "runPlane",
+            "label": "生命周期事件旁路",
+            "collectionIndex": 5,
+            "artifactIndex": 6
+          },
+          "right": {
+            "id": "modelCalls",
+            "from": "orchestrator",
+            "to": "zhipu",
+            "label": "模型调用(根 + 全部站点)",
+            "collectionIndex": 6,
+            "artifactIndex": 7
+          },
+          "point": [
+            549.5,
+            264
+          ],
+          "sharedNode": "orchestrator"
+        },
+        {
+          "left": {
+            "id": "runClassifier",
+            "from": "orchestrator",
+            "to": "classifier",
+            "label": "run_classifier",
+            "collectionIndex": 7,
+            "artifactIndex": 8
+          },
+          "right": {
+            "id": "runAnalyst",
+            "from": "orchestrator",
+            "to": "analyst",
+            "label": "run_analyst",
+            "collectionIndex": 8,
+            "artifactIndex": 9
+          },
+          "point": [
+            337.30000000000007,
+            389.04545454545456
+          ],
+          "sharedNode": "orchestrator"
+        }
+      ],
+      "detours": [
+        {
+          "relationship": {
+            "id": "tunnelFwd",
+            "from": "cloudflared",
+            "to": "githubChan",
+            "label": "转发 :3000",
+            "collectionIndex": 2,
+            "artifactIndex": 3
+          },
+          "bends": 2,
+          "stretch": 1.429
+        },
+        {
+          "relationship": {
+            "id": "modelCalls",
+            "from": "orchestrator",
+            "to": "zhipu",
+            "label": "模型调用(根 + 全部站点)",
+            "collectionIndex": 6,
+            "artifactIndex": 7
+          },
+          "bends": 3,
+          "stretch": 1
+        },
+        {
+          "relationship": {
+            "id": "gitTransport",
+            "from": "gitremote",
+            "to": "github",
+            "label": "克隆 / 推送 · 字面 URL",
+            "collectionIndex": 15,
+            "artifactIndex": 16
+          },
+          "bends": 3,
+          "stretch": 1.09
+        }
+      ],
+      "truncated": false
+    },
+    "hints": [
+      "orchestrator → runPlane and orchestrator → zhipu cross next to orchestrator: move node runPlane or zhipu so the two reach orchestrator from different sides (for example one level with it, one directly above or below it).",
+      "orchestrator → classifier and orchestrator → analyst cross next to orchestrator: move node classifier or analyst so the two reach orchestrator from different sides (for example one level with it, one directly above or below it).",
+      "cloudflared → githubChan needs 2 bends: move node cloudflared or githubChan so they share a row or column with matching centers, or sit diagonally with a clear corner.",
+      "orchestrator → zhipu needs 3 bends: move node orchestrator or zhipu so they share a row or column with matching centers, or sit diagonally with a clear corner.",
+      "gitremote → github needs 3 bends: move node gitremote or github so they share a row or column with matching centers, or sit diagonally with a clear corner."
+    ],
+    "repair": "Trace these relationships at the desktop viewport. For Architecture, use references/architecture-layout-repair.md: reflow a blocked main path or tangled connected scene, and repair an isolated defect locally only when the surrounding composition is accepted. Preserve all semantic content and user-fixed geometry. Rerun finalize once after the edit."
+  }
+}

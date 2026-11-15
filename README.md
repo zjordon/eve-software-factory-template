@@ -69,7 +69,8 @@ pnpm build && pnpm exec eve start
 
 - [docs/architecture.md](docs/architecture.md) — 架构、信任模型、数据落点、观测面(§2.10)
 - [docs/自托管实施方案.md](docs/自托管实施方案.md) — M1-M6 全程实施方案
-- [out/运维手册.md](out/运维手册.md) — 常驻运维:pm2 规矩、备份、巡检、僵尸处置
+- [docs/运维手册.md](docs/运维手册.md) — 常驻运维:pm2 规矩、备份、巡检、僵尸处置
+- [docs/部署手册.md](docs/部署手册.md) — 首次部署的十大坑位手册(云端形态)
 - `docs/implement-plan/` — M1 至 M6 六份实施计划与执行记录
 - [CHANGELOG.md](CHANGELOG.md) — 版本变更
 

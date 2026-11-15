@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\candidate.json",
+    "sha256": "d628796a36402816ff65066689140c66f20bd245b4e26bb7548eec5a5801d432",
+    "bytes": 9210
+  },
+  "artifact": {
+    "path": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+    "sha256": "21e624e698658491514bf0347e9cb5971ab336ad571083db2a597022b480307a",
+    "bytes": 847501
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "fail"
+  },
+  "failedStage": "browser-check",
+  "diagnostics": [
+    {
+      "code": "viewer/evidence-path-conflict",
+      "severity": "error",
+      "message": "browser-check will not replace the existing unowned evidence path \"D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2\\factory-architecture.browser-check.json\".",
+      "subject": {
+        "artifact": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+        "evidencePath": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2\\factory-architecture.browser-check.json"
+      },
+      "evidence": {
+        "reason": {
+          "code": "ownership-artifact-mismatch"
+        }
+      },
+      "supportedFixes": [
+        "move the conflicting file aside, or choose a separate --out-dir, then rerun browser-check"
+      ]
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 1,
+    "shown": 1,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2\\factory-architecture.finalize.json",
+    "summaryReceipt": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2\\factory-architecture.finalize-summary.json",
+    "browserCheckReceipt": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\review-2\\factory-architecture.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.1.0",
+    "availableVersion": "3.1.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-18T01:04:10.683Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 1493
+}

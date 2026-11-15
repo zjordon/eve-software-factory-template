@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "1173c9e8-3b36-4820-b4a9-3e5ee9799a5b",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\candidate.json",
+  "output": "D:\\dev\\git\\z_jordon\\fork\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261018-2100\\factory-architecture.html",
+  "specification": {
+    "sha256": "54f43d02438ede7dde9039aebf7d900506c88e167f7a0e19a12625426790317e",
+    "bytes": 9188
+  },
+  "artifact": {
+    "sha256": "ca640fc7bfa3b9ec2d5e5b66106850ac9d3738abf325a143d8fc9c8f505b6a8f",
+    "bytes": 847729
+  }
+}

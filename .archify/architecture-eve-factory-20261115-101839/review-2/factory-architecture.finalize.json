@@ -1,0 +1,1101 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "architecture",
+  "quality": "showcase",
+  "startedAt": "2026-11-15T02:26:53.385Z",
+  "specification": {
+    "path": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\candidate.json",
+    "sha256": "5d1df717a7eaf9abb10ca6f9b041c6d58707c440b4defa2481b0fbc673c48597",
+    "bytes": 11696
+  },
+  "artifact": {
+    "path": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\factory-architecture.html",
+    "sha256": "0499658c84f1b1bdc2323c6003112feaafdeb4698f4889ef24a7d0292b5beb13",
+    "bytes": 859118
+  },
+  "stages": {
+    "validate": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": null,
+      "execution": "embedded-in-deliver",
+      "command": [
+        "D:\\soft\\nodejs\\node.exe",
+        "C:\\Users\\ZhuanZ\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "deliver",
+        "architecture",
+        "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\candidate.json",
+        "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\factory-architecture.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "validate",
+        "specification": {
+          "sha256": "5d1df717a7eaf9abb10ca6f9b041c6d58707c440b4defa2481b0fbc673c48597",
+          "bytes": 11696
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "deliver": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1229,
+      "command": [
+        "D:\\soft\\nodejs\\node.exe",
+        "C:\\Users\\ZhuanZ\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "deliver",
+        "architecture",
+        "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\candidate.json",
+        "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\factory-architecture.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "receiptId": "5ee56ec7-ee73-4451-ad8a-257858fb5e2d",
+        "ok": true,
+        "command": "deliver",
+        "type": "architecture",
+        "input": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\candidate.json",
+        "output": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\factory-architecture.html",
+        "specification": {
+          "sha256": "5d1df717a7eaf9abb10ca6f9b041c6d58707c440b4defa2481b0fbc673c48597",
+          "bytes": 11696
+        },
+        "artifact": {
+          "sha256": "0499658c84f1b1bdc2323c6003112feaafdeb4698f4889ef24a7d0292b5beb13",
+          "bytes": 859118
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        },
+        "evidence": {
+          "verified": true,
+          "repository": "https://github.com/zjordon/eve-software-factory-template",
+          "revision": "01909edacf4a78f89338def3529e02ae45f51763",
+          "references": 25
+        },
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      }
+    },
+    "check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 255,
+      "command": [
+        "D:\\soft\\nodejs\\node.exe",
+        "C:\\Users\\ZhuanZ\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "check",
+        "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\factory-architecture.html",
+        "--require-provenance"
+      ],
+      "receipt": {
+        "ok": true,
+        "file": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\factory-architecture.html",
+        "artifact": {
+          "sha256": "0499658c84f1b1bdc2323c6003112feaafdeb4698f4889ef24a7d0292b5beb13",
+          "bytes": 859118
+        },
+        "checks": [
+          {
+            "name": "single_svg",
+            "ok": true,
+            "details": [
+              "found 1 <svg> block(s)"
+            ]
+          },
+          {
+            "name": "finite_svg",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "orthogonal_arrows",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "label_route_clearance",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_crossings",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_corridors",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "container_border_runs",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "route_rhythm",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "legend_clearance",
+            "ok": true,
+            "details": []
+          }
+        ],
+        "composition": {
+          "schemaVersion": 1,
+          "profile": "showcase",
+          "status": "pass",
+          "summary": {
+            "errors": 0,
+            "warnings": 0
+          },
+          "metrics": {
+            "properCrossings": 0,
+            "resolvedCrossovers": 3,
+            "ambiguousCorridors": 0,
+            "arrowheadCollisions": 0,
+            "containerBorderRuns": 0,
+            "labelRouteClearanceIssues": 0,
+            "labelCanvasOverflowIssues": 0,
+            "minLabelRouteClearance": 6,
+            "desktopReadabilityIssues": 0,
+            "viewportHeightIssues": 0,
+            "minProjectedNodeTextPx": 6.032855939342881,
+            "maxBends": 3,
+            "routesOverSuggestedBends": 2,
+            "maxStretch": 1.471,
+            "routesOverSuggestedStretch": 1,
+            "minSegmentPx": 24,
+            "minInteriorSegmentPx": 28,
+            "shortSegmentCount": 0,
+            "shortEndpointSegmentCount": 0,
+            "shortInteriorSegmentCount": 0,
+            "microSegmentCount": 0
+          },
+          "suggestedLimits": {
+            "bendsPerRelationship": 2,
+            "stretch": 1.35,
+            "segmentPx": 16,
+            "microSegmentPx": 8
+          },
+          "routeReview": {
+            "crossings": [
+              {
+                "left": {
+                  "id": "unattended",
+                  "from": "githubChan",
+                  "to": "orchestrator",
+                  "label": "无人值守派发",
+                  "collectionIndex": 3,
+                  "artifactIndex": 4
+                },
+                "right": {
+                  "id": "observe",
+                  "from": "orchestrator",
+                  "to": "runPlane",
+                  "label": "生命周期事件旁路",
+                  "collectionIndex": 5,
+                  "artifactIndex": 6
+                },
+                "point": [
+                  503,
+                  307.04999999999984
+                ],
+                "sharedNode": "orchestrator"
+              },
+              {
+                "left": {
+                  "id": "runAnalyst",
+                  "from": "orchestrator",
+                  "to": "analyst",
+                  "label": "run_analyst",
+                  "collectionIndex": 8,
+                  "artifactIndex": 9
+                },
+                "right": {
+                  "id": "runReviewer",
+                  "from": "orchestrator",
+                  "to": "reviewer",
+                  "label": "run_reviewer",
+                  "collectionIndex": 9,
+                  "artifactIndex": 10
+                },
+                "point": [
+                  452,
+                  418.00000000000006
+                ],
+                "sharedNode": "orchestrator"
+              },
+              {
+                "left": {
+                  "id": "runAnalyst",
+                  "from": "orchestrator",
+                  "to": "analyst",
+                  "label": "run_analyst",
+                  "collectionIndex": 8,
+                  "artifactIndex": 9
+                },
+                "right": {
+                  "id": "runImplementer",
+                  "from": "orchestrator",
+                  "to": "implementer",
+                  "label": "run_implementer",
+                  "collectionIndex": 10,
+                  "artifactIndex": 11
+                },
+                "point": [
+                  452,
+                  350
+                ],
+                "sharedNode": "orchestrator"
+              }
+            ],
+            "detours": [
+              {
+                "relationship": {
+                  "id": "tunnelFwd",
+                  "from": "cloudflared",
+                  "to": "githubChan",
+                  "label": "转发 :3000",
+                  "collectionIndex": 2,
+                  "artifactIndex": 3
+                },
+                "bends": 2,
+                "stretch": 1.471
+              },
+              {
+                "relationship": {
+                  "id": "modelCalls",
+                  "from": "orchestrator",
+                  "to": "zhipu",
+                  "label": "模型调用(根 + 全部站点)",
+                  "collectionIndex": 6,
+                  "artifactIndex": 7
+                },
+                "bends": 3,
+                "stretch": 1.196
+              },
+              {
+                "relationship": {
+                  "id": "gitTransport",
+                  "from": "gitremote",
+                  "to": "github",
+                  "label": "克隆 / 推送 · 字面 URL",
+                  "collectionIndex": 15,
+                  "artifactIndex": 16
+                },
+                "bends": 3,
+                "stretch": 1.09
+              }
+            ]
+          },
+          "leadingSpace": {
+            "measured": true,
+            "emptyTopPx": 40,
+            "emptyTopRatio": 0.045,
+            "occupiedTop": 40,
+            "viewBoxTop": 0,
+            "canvasHeight": 894,
+            "typicalNodeHeight": 78,
+            "reviewSuggested": false
+          },
+          "desktopReadability": {
+            "budgetBasis": "legacy-930",
+            "readerContract": "declared-wide-v1",
+            "availableDiagramWidth": 930,
+            "actualBudgetPx": 930,
+            "limit": "legacy",
+            "requestedTargetPx": 7.5,
+            "requestedTargetMet": false,
+            "hardFloorPx": 6,
+            "hardFloorMet": true,
+            "minimumOwner": {
+              "kind": "node",
+              "id": "cloudflared"
+            },
+            "minimumSourceTextPx": 7.7,
+            "minimumProjectedTextPx": 6.032855939342881,
+            "semanticTextCount": 56
+          },
+          "issues": []
+        },
+        "provenance": "current",
+        "deliveryReceiptId": "5ee56ec7-ee73-4451-ad8a-257858fb5e2d"
+      }
+    },
+    "browser-check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 3249,
+      "command": [
+        "D:\\soft\\nodejs\\node.exe",
+        "C:\\Users\\ZhuanZ\\.claude\\skills\\archify\\bin\\archify.mjs",
+        "browser-check",
+        "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\factory-architecture.html",
+        "--json",
+        "--require-provenance",
+        "--out-dir",
+        "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\review-2"
+      ],
+      "execution": "in-process",
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "browser-check",
+        "evidenceKind": "automated-browser",
+        "status": "pass",
+        "visualReview": "not-requested",
+        "provenance": "current",
+        "deliveryReceiptId": "5ee56ec7-ee73-4451-ad8a-257858fb5e2d",
+        "artifact": {
+          "path": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\factory-architecture.html",
+          "sha256": "0499658c84f1b1bdc2323c6003112feaafdeb4698f4889ef24a7d0292b5beb13",
+          "bytes": 859118
+        },
+        "state": {
+          "detail": "read",
+          "motion": "still"
+        },
+        "chrome": {
+          "status": "available",
+          "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+        },
+        "diagnostics": [],
+        "containment": {
+          "status": "pass",
+          "policy": "fit-or-reader-declared-readable-vertical-scroll",
+          "viewports": [
+            {
+              "width": 1440,
+              "height": 900,
+              "theme": "light",
+              "innerWidth": 1440,
+              "innerHeight": 900,
+              "scrollWidth": 1440,
+              "scrollHeight": 1014,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1187,
+              "diagramWidth": 1157,
+              "pageComposition": {
+                "bodyPaddingPx": 12,
+                "headerPx": 52,
+                "diagramChromePx": 78,
+                "svgPx": 871,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1187,
+              "minimumProjectedNodeTextPx": 7.505391743892165,
+              "minimumProjectedNonEdgeTextPx": 7.505391743892165,
+              "minimumProjectedEdgeTextPx": 7.797809604043808,
+              "minimumProjectedNodeText": "foreman-local · factory.zjordon.com",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "cloudflared"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1600,
+              "height": 1000,
+              "theme": "light",
+              "innerWidth": 1600,
+              "innerHeight": 1000,
+              "scrollWidth": 1600,
+              "scrollHeight": 1080,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1187,
+              "diagramWidth": 1157,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 60,
+                "diagramChromePx": 84,
+                "svgPx": 871,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1187,
+              "minimumProjectedNodeTextPx": 7.505391743892165,
+              "minimumProjectedNonEdgeTextPx": 7.505391743892165,
+              "minimumProjectedEdgeTextPx": 7.797809604043808,
+              "minimumProjectedNodeText": "foreman-local · factory.zjordon.com",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "cloudflared"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1920,
+              "height": 1080,
+              "theme": "light",
+              "innerWidth": 1920,
+              "innerHeight": 1080,
+              "scrollWidth": 1920,
+              "scrollHeight": 1080,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1187,
+              "diagramWidth": 1157,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 60,
+                "diagramChromePx": 84,
+                "svgPx": 871,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1187,
+              "minimumProjectedNodeTextPx": 7.505391743892165,
+              "minimumProjectedNonEdgeTextPx": 7.505391743892165,
+              "minimumProjectedEdgeTextPx": 7.797809604043808,
+              "minimumProjectedNodeText": "foreman-local · factory.zjordon.com",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "cloudflared"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "theme": "light",
+              "innerWidth": 2048,
+              "innerHeight": 1320,
+              "scrollWidth": 2048,
+              "scrollHeight": 1320,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1487,
+              "diagramWidth": 1437,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 68,
+                "diagramChromePx": 94,
+                "svgPx": 1082,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1187,
+              "minimumProjectedNodeTextPx": 7.7,
+              "minimumProjectedNonEdgeTextPx": 7.7,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "foreman-local · factory.zjordon.com",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "cloudflared"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 44,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            }
+          ]
+        },
+        "themeStates": {
+          "status": "pass",
+          "viewports": [
+            {
+              "width": 1440,
+              "height": 900,
+              "requestedTheme": "light",
+              "resolvedTheme": "light",
+              "ok": true
+            },
+            {
+              "width": 1600,
+              "height": 1000,
+              "requestedTheme": "light",
+              "resolvedTheme": "light",
+              "ok": true
+            },
+            {
+              "width": 1920,
+              "height": 1080,
+              "requestedTheme": "light",
+              "resolvedTheme": "light",
+              "ok": true
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "requestedTheme": "light",
+              "resolvedTheme": "light",
+              "ok": true
+            },
+            {
+              "width": 1440,
+              "height": 900,
+              "requestedTheme": "dark",
+              "resolvedTheme": "dark",
+              "ok": true
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "requestedTheme": "dark",
+              "resolvedTheme": "dark",
+              "ok": true
+            }
+          ]
+        },
+        "readability": {
+          "status": "pass",
+          "minimumProjectedNodeTextPx": 6,
+          "viewports": [
+            {
+              "width": 1440,
+              "height": 900,
+              "theme": "light",
+              "innerWidth": 1440,
+              "innerHeight": 900,
+              "scrollWidth": 1440,
+              "scrollHeight": 1014,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1187,
+              "diagramWidth": 1157,
+              "pageComposition": {
+                "bodyPaddingPx": 12,
+                "headerPx": 52,
+                "diagramChromePx": 78,
+                "svgPx": 871,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1187,
+              "minimumProjectedNodeTextPx": 7.505391743892165,
+              "minimumProjectedNonEdgeTextPx": 7.505391743892165,
+              "minimumProjectedEdgeTextPx": 7.797809604043808,
+              "minimumProjectedNodeText": "foreman-local · factory.zjordon.com",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "cloudflared"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1600,
+              "height": 1000,
+              "theme": "light",
+              "innerWidth": 1600,
+              "innerHeight": 1000,
+              "scrollWidth": 1600,
+              "scrollHeight": 1080,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1187,
+              "diagramWidth": 1157,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 60,
+                "diagramChromePx": 84,
+                "svgPx": 871,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1187,
+              "minimumProjectedNodeTextPx": 7.505391743892165,
+              "minimumProjectedNonEdgeTextPx": 7.505391743892165,
+              "minimumProjectedEdgeTextPx": 7.797809604043808,
+              "minimumProjectedNodeText": "foreman-local · factory.zjordon.com",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "cloudflared"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1920,
+              "height": 1080,
+              "theme": "light",
+              "innerWidth": 1920,
+              "innerHeight": 1080,
+              "scrollWidth": 1920,
+              "scrollHeight": 1080,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1187,
+              "diagramWidth": 1157,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 60,
+                "diagramChromePx": 84,
+                "svgPx": 871,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1187,
+              "minimumProjectedNodeTextPx": 7.505391743892165,
+              "minimumProjectedNonEdgeTextPx": 7.505391743892165,
+              "minimumProjectedEdgeTextPx": 7.797809604043808,
+              "minimumProjectedNodeText": "foreman-local · factory.zjordon.com",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "cloudflared"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "theme": "light",
+              "innerWidth": 2048,
+              "innerHeight": 1320,
+              "scrollWidth": 2048,
+              "scrollHeight": 1320,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1487,
+              "diagramWidth": 1437,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 68,
+                "diagramChromePx": 94,
+                "svgPx": 1082,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1187,
+              "minimumProjectedNodeTextPx": 7.7,
+              "minimumProjectedNonEdgeTextPx": 7.7,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "foreman-local · factory.zjordon.com",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "cloudflared"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 44,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            }
+          ]
+        },
+        "viewerChrome": {
+          "status": "pass",
+          "viewports": [
+            {
+              "width": 1440,
+              "height": 900,
+              "theme": "light",
+              "innerWidth": 1440,
+              "innerHeight": 900,
+              "scrollWidth": 1440,
+              "scrollHeight": 1014,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1187,
+              "diagramWidth": 1157,
+              "pageComposition": {
+                "bodyPaddingPx": 12,
+                "headerPx": 52,
+                "diagramChromePx": 78,
+                "svgPx": 871,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1187,
+              "minimumProjectedNodeTextPx": 7.505391743892165,
+              "minimumProjectedNonEdgeTextPx": 7.505391743892165,
+              "minimumProjectedEdgeTextPx": 7.797809604043808,
+              "minimumProjectedNodeText": "foreman-local · factory.zjordon.com",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "cloudflared"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1600,
+              "height": 1000,
+              "theme": "light",
+              "innerWidth": 1600,
+              "innerHeight": 1000,
+              "scrollWidth": 1600,
+              "scrollHeight": 1080,
+              "overflowX": false,
+              "overflowY": true,
+              "verticalScrollAccepted": true,
+              "overflowDisposition": "readable-vertical-scroll",
+              "readerLayout": "adaptive",
+              "readerOverflow": "authored",
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1187,
+              "diagramWidth": 1157,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 60,
+                "diagramChromePx": 84,
+                "svgPx": 871,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1187,
+              "minimumProjectedNodeTextPx": 7.505391743892165,
+              "minimumProjectedNonEdgeTextPx": 7.505391743892165,
+              "minimumProjectedEdgeTextPx": 7.797809604043808,
+              "minimumProjectedNodeText": "foreman-local · factory.zjordon.com",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "cloudflared"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1920,
+              "height": 1080,
+              "theme": "light",
+              "innerWidth": 1920,
+              "innerHeight": 1080,
+              "scrollWidth": 1920,
+              "scrollHeight": 1080,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1187,
+              "diagramWidth": 1157,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 60,
+                "diagramChromePx": 84,
+                "svgPx": 871,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1187,
+              "minimumProjectedNodeTextPx": 7.505391743892165,
+              "minimumProjectedNonEdgeTextPx": 7.505391743892165,
+              "minimumProjectedEdgeTextPx": 7.797809604043808,
+              "minimumProjectedNodeText": "foreman-local · factory.zjordon.com",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "cloudflared"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "theme": "light",
+              "innerWidth": 2048,
+              "innerHeight": 1320,
+              "scrollWidth": 2048,
+              "scrollHeight": 1320,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1487,
+              "diagramWidth": 1437,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 68,
+                "diagramChromePx": 94,
+                "svgPx": 1082,
+                "cardsPx": 0,
+                "viewBoxHeight": 894
+              },
+              "viewBoxWidth": 1187,
+              "minimumProjectedNodeTextPx": 7.7,
+              "minimumProjectedNonEdgeTextPx": 7.7,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "foreman-local · factory.zjordon.com",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "cloudflared"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 44,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            }
+          ]
+        },
+        "captures": {
+          "status": "not-requested",
+          "screenshots": [],
+          "contactSheet": null
+        },
+        "sidecars": {
+          "directory": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\review-2",
+          "receipt": "factory-architecture.browser-check.json",
+          "files": []
+        }
+      }
+    }
+  },
+  "diagnostics": [],
+  "evidence": {
+    "receipt": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\review-2\\factory-architecture.finalize.json",
+    "summaryReceipt": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\review-2\\factory-architecture.finalize-summary.json",
+    "browserCheckReceipt": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\review-2\\factory-architecture.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "finishedAt": "2026-11-15T02:26:58.952Z",
+  "durationMs": 5567,
+  "update": {
+    "status": "update_available",
+    "installedVersion": "3.1.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.2.0",
+    "severity": "normal",
+    "checkedAt": "2026-11-15T01:53:12.734Z",
+    "source": "cache",
+    "noticeRequired": true,
+    "noticeText": "Archify update: 3.1.0 → 3.2.0. A previous check at 2026-11-15T01:53:12.734Z found a newer release. Release notes: https://github.com/tt-a1i/archify/releases/tag/v3.2.0. The installed Skill has not changed; ask to snooze or ignore this reminder.",
+    "eventKey": "archify@sha256:70e210265c59f24dcbdf2a502ff671104b5454e7ee7d3554aecd86bad32384f5"
+  }
+}

@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\candidate.json",
+    "sha256": "5d1df717a7eaf9abb10ca6f9b041c6d58707c440b4defa2481b0fbc673c48597",
+    "bytes": 11696
+  },
+  "artifact": {
+    "path": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\factory-architecture.html",
+    "sha256": "0499658c84f1b1bdc2323c6003112feaafdeb4698f4889ef24a7d0292b5beb13",
+    "bytes": 859118
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\review-2\\factory-architecture.finalize.json",
+    "summaryReceipt": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\review-2\\factory-architecture.finalize-summary.json",
+    "browserCheckReceipt": "D:\\dev\\git\\z_jordon\\labs\\eve-software-factory-template\\.archify\\architecture-eve-factory-20261115-101839\\review-2\\factory-architecture.browser-check.json"
+  },
+  "update": {
+    "status": "update_available",
+    "installedVersion": "3.1.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": "https://github.com/tt-a1i/archify/releases/tag/v3.2.0",
+    "severity": "normal",
+    "checkedAt": "2026-11-15T01:53:12.734Z",
+    "source": "cache",
+    "noticeRequired": true,
+    "noticeText": "Archify update: 3.1.0 → 3.2.0. A previous check at 2026-11-15T01:53:12.734Z found a newer release. Release notes: https://github.com/tt-a1i/archify/releases/tag/v3.2.0. The installed Skill has not changed; ask to snooze or ignore this reminder.",
+    "eventKey": "archify@sha256:70e210265c59f24dcbdf2a502ff671104b5454e7ee7d3554aecd86bad32384f5"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 5567,
+  "visualReviewRecommendation": {
+    "action": "inspect-route-readability",
+    "signals": {
+      "resolvedCrossovers": 3,
+      "routesOverSuggestedBends": 2,
+      "routesOverSuggestedStretch": 1
+    },
+    "reason": "Automated gates passed, but crossings or detours still need perceptual review before claiming visual quality.",
+    "affectedRoutes": {
+      "crossings": [
+        {
+          "left": {
+            "id": "unattended",
+            "from": "githubChan",
+            "to": "orchestrator",
+            "label": "无人值守派发",
+            "collectionIndex": 3,
+            "artifactIndex": 4
+          },
+          "right": {
+            "id": "observe",
+            "from": "orchestrator",
+            "to": "runPlane",
+            "label": "生命周期事件旁路",
+            "collectionIndex": 5,
+            "artifactIndex": 6
+          },
+          "point": [
+            503,
+            307.04999999999984
+          ],
+          "sharedNode": "orchestrator"
+        },
+        {
+          "left": {
+            "id": "runAnalyst",
+            "from": "orchestrator",
+            "to": "analyst",
+            "label": "run_analyst",
+            "collectionIndex": 8,
+            "artifactIndex": 9
+          },
+          "right": {
+            "id": "runReviewer",
+            "from": "orchestrator",
+            "to": "reviewer",
+            "label": "run_reviewer",
+            "collectionIndex": 9,
+            "artifactIndex": 10
+          },
+          "point": [
+            452,
+            418.00000000000006
+          ],
+          "sharedNode": "orchestrator"
+        },
+        {
+          "left": {
+            "id": "runAnalyst",
+            "from": "orchestrator",
+            "to": "analyst",
+            "label": "run_analyst",
+            "collectionIndex": 8,
+            "artifactIndex": 9
+          },
+          "right": {
+            "id": "runImplementer",
+            "from": "orchestrator",
+            "to": "implementer",
+            "label": "run_implementer",
+            "collectionIndex": 10,
+            "artifactIndex": 11
+          },
+          "point": [
+            452,
+            350
+          ],
+          "sharedNode": "orchestrator"
+        }
+      ],
+      "detours": [
+        {
+          "relationship": {
+            "id": "tunnelFwd",
+            "from": "cloudflared",
+            "to": "githubChan",
+            "label": "转发 :3000",
+            "collectionIndex": 2,
+            "artifactIndex": 3
+          },
+          "bends": 2,
+          "stretch": 1.471
+        },
+        {
+          "relationship": {
+            "id": "modelCalls",
+            "from": "orchestrator",
+            "to": "zhipu",
+            "label": "模型调用(根 + 全部站点)",
+            "collectionIndex": 6,
+            "artifactIndex": 7
+          },
+          "bends": 3,
+          "stretch": 1.196
+        },
+        {
+          "relationship": {
+            "id": "gitTransport",
+            "from": "gitremote",
+            "to": "github",
+            "label": "克隆 / 推送 · 字面 URL",
+            "collectionIndex": 15,
+            "artifactIndex": 16
+          },
+          "bends": 3,
+          "stretch": 1.09
+        }
+      ],
+      "truncated": false
+    },
+    "hints": [
+      "githubChan → orchestrator and orchestrator → runPlane cross next to orchestrator: move node githubChan or runPlane so the two reach orchestrator from different sides (for example one level with it, one directly above or below it).",
+      "orchestrator → analyst and orchestrator → reviewer cross next to orchestrator: move node analyst or reviewer so the two reach orchestrator from different sides (for example one level with it, one directly above or below it).",
+      "orchestrator → analyst and orchestrator → implementer cross next to orchestrator: move node analyst or implementer so the two reach orchestrator from different sides (for example one level with it, one directly above or below it).",
+      "cloudflared → githubChan needs 2 bends: move node cloudflared or githubChan so they share a row or column with matching centers, or sit diagonally with a clear corner.",
+      "orchestrator → zhipu needs 3 bends: move node orchestrator or zhipu so they share a row or column with matching centers, or sit diagonally with a clear corner.",
+      "gitremote → github needs 3 bends: move node gitremote or github so they share a row or column with matching centers, or sit diagonally with a clear corner."
+    ],
+    "repair": "Trace these relationships at the desktop viewport. For Architecture, use references/architecture-layout-repair.md: reflow a blocked main path or tangled connected scene, and repair an isolated defect locally only when the surrounding composition is accepted. Preserve all semantic content and user-fixed geometry. Rerun finalize once after the edit."
+  }
+}

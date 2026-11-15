@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "eve 软件工厂:自托管运行时架构(M2 后)",
+    "locale": "zh-CN",
+    "output": ".archify/architecture-eve-factory-20261018-2100/factory-architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/zjordon/eve-software-factory-template.git",
+      "provider": "github",
+      "revision": "0d817407f91e35de7aa544408593382dc58629d7"
+    }
+  },
+  "components": [
+    { "id": "operator", "type": "external", "label": "操作员", "sublabel": "远程 TUI · eve remote connect", "pos": [34, 40], "size": [140, 58] },
+    { "id": "zhipu", "type": "external", "label": "智谱 GLM API", "sublabel": "glm-5.3 / glm-5.3-flash · Anthropic 兼容端点", "pos": [1020, 40], "size": [178, 84], "sources": [{ "path": "agent/lib/models.ts", "line": 1, "end_line": 25, "label": "智谱直连与模型分配" }] },
+    { "id": "github", "type": "external", "label": "GitHub", "sublabel": "FACTORY_REPO · 草稿 PR 交付", "pos": [1220, 40], "size": [138, 76], "sources": [{ "path": "agent/lib/constants.ts", "line": 27, "end_line": 47, "label": "FACTORY_REPO 必填校验" }] },
+    { "id": "eveHttp", "type": "security", "label": "eve HTTP 服务", "sublabel": "/eve/v1/* · Basic 路由鉴权", "pos": [34, 230], "size": [175, 88], "sources": [{ "path": "agent/channels/eve.ts", "line": 1, "end_line": 58, "label": "basicUser + localDevUser 走查" }] },
+    { "id": "orchestrator", "type": "backend", "label": "Foreman 编排器", "sublabel": "根会话 · glm-5.3 · 四站调度 · 评审环 ≤2", "pos": [274, 230], "size": [205, 96], "sources": [{ "path": "agent/instructions.ts", "line": 14, "end_line": 90, "label": "编排器系统提示词" }, { "path": "agent/agent.ts", "line": 17, "end_line": 24, "label": "模型与会话预算" }] },
+    { "id": "classifier", "type": "backend", "label": "① classifier 分诊", "sublabel": "glm-5.3-flash · 可行动判定", "pos": [268, 450], "size": [132, 76], "sources": [{ "path": "agent/subagents/classifier/agent.ts", "line": 22, "end_line": 29, "label": "快速模型分诊站" }] },
+    { "id": "analyst", "type": "backend", "label": "② analyst 分析", "sublabel": "计划 + 验收标准", "pos": [430, 450], "size": [132, 76], "sources": [{ "path": "agent/subagents/analyst/agent.ts", "line": 22, "end_line": 30, "label": "对真实检出做计划" }] },
+    { "id": "reviewer", "type": "backend", "label": "④ reviewer 评审", "sublabel": "独立裁决 · 返工 ≤2 轮", "pos": [592, 450], "size": [132, 76], "sources": [{ "path": "agent/subagents/reviewer/agent.ts", "line": 21, "end_line": 31, "label": "独立评审站" }] },
+    { "id": "implementer", "type": "backend", "label": "③ implementer 实现", "sublabel": "编码+验证 · push factory/*", "pos": [754, 450], "size": [142, 76], "sources": [{ "path": "agent/subagents/implementer/agent.ts", "line": 22, "end_line": 32, "label": "特性分支实现站" }] },
+    { "id": "sandbox", "type": "backend", "label": "站点 Docker 沙箱", "sublabel": "模板镜像 → eve-sbx-* 会话容器 · /workspace/repo 检出", "pos": [430, 590], "size": [466, 84], "sources": [{ "path": "agent/lib/github/repo-sandbox.ts", "line": 120, "end_line": 158, "label": "factoryInit 克隆" }, { "path": "agent/lib/constants.ts", "line": 84, "end_line": 108, "label": "docker|vercel 后端开关" }] },
+    { "id": "gitremote", "type": "security", "label": "Git 安全层", "sublabel": "validateBranch · 字面 URL · arm/disarm", "pos": [935, 556], "size": [180, 84], "sources": [{ "path": "agent/lib/github/git-remote.ts", "line": 10, "end_line": 68, "label": "validateBranch 拒 main/master" }, { "path": "agent/lib/github/git-remote.ts", "line": 106, "end_line": 172, "label": "凭据 arm/disarm 对" }] },
+    { "id": "credentials", "type": "security", "label": "BYO 凭据铸造", "sublabel": "App JWT → 1h 安装令牌 · 缓存单飞", "pos": [925, 716], "size": [170, 80], "sources": [{ "path": "agent/lib/github/credentials.ts", "line": 1, "end_line": 155, "label": "自持 App 令牌铸造" }] },
+    { "id": "blob", "type": "database", "label": "Blob 存储(本地后端)", "sublabel": "FACTORY_DATA_DIR · 命名空间注册表守卫", "pos": [230, 722], "size": [200, 84], "sources": [{ "path": "agent/lib/blob.ts", "line": 12, "end_line": 45, "label": "双后端开关与逃逸防御" }] },
+    { "id": "workflow", "type": "database", "label": "工作流状态", "sublabel": ".eve/.workflow-data · pm2 重启不丢", "pos": [34, 590], "size": [175, 72], "sources": [{ "path": "docs/implement-plan/M2-常驻服务.md", "line": 25, "end_line": 25, "label": "工作流状态目录" }, { "path": "docs/implement-plan/M2-常驻服务.md", "line": 164, "end_line": 164, "label": "重启持久实证" }] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "自托管运行时(专用 Ubuntu 机 · pm2 守护 eve start :3000)", "wraps": ["eveHttp", "orchestrator", "classifier", "analyst", "reviewer", "implementer", "sandbox", "gitremote", "credentials", "blob", "workflow"] },
+    { "kind": "security-group", "label": "凭据边界(令牌不入模型)", "wraps": ["gitremote", "credentials"] }
+  ],
+  "connections": [
+    { "id": "operatorIn", "from": "operator", "to": "eveHttp", "label": "Basic 认证", "variant": "security" },
+    { "id": "dispatch", "from": "eveHttp", "to": "orchestrator", "label": "会话派发", "variant": "emphasis" },
+    { "id": "statePersist", "from": "eveHttp", "to": "workflow", "label": "运行状态落盘", "variant": "dashed" },
+    { "id": "modelCalls", "from": "orchestrator", "to": "zhipu", "label": "模型调用(根 + 全部站点)", "fromSide": "right", "toSide": "bottom" },
+    { "id": "runClassifier", "from": "orchestrator", "to": "classifier", "label": "run_classifier", "variant": "emphasis" },
+    { "id": "runAnalyst", "from": "orchestrator", "to": "analyst", "label": "run_analyst", "variant": "emphasis" },
+    { "id": "runReviewer", "from": "orchestrator", "to": "reviewer", "label": "run_reviewer", "variant": "emphasis" },
+    { "id": "runImplementer", "from": "orchestrator", "to": "implementer", "label": "run_implementer", "variant": "emphasis" },
+    { "id": "analystClone", "from": "analyst", "to": "sandbox", "label": "factoryInit 克隆" },
+    { "id": "revFetch", "from": "reviewer", "to": "sandbox", "label": "fetch 分支复核" },
+    { "id": "implWork", "from": "implementer", "to": "sandbox", "label": "检出 · 验证" },
+    { "id": "pushBranch", "from": "implementer", "to": "gitremote", "label": "push_branch", "fromSide": "right", "toSide": "left", "labelAt": [916, 536] },
+    { "id": "gitTransport", "from": "gitremote", "to": "github", "label": "克隆 / 推送 · 字面 URL", "fromSide": "right", "toSide": "bottom" },
+    { "id": "credInject", "from": "gitremote", "to": "sandbox", "label": "令牌 arm/disarm", "variant": "security", "fromSide": "left", "toSide": "right", "labelAt": [916, 696] },
+    { "id": "tokenMint", "from": "credentials", "to": "gitremote", "label": "1h 安装令牌", "variant": "security", "fromSide": "top", "toSide": "bottom" },
+    { "id": "orchBlob", "from": "orchestrator", "to": "blob", "label": "偏好 / 大脑 / 工件", "fromSide": "left", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "流水线", "items": ["四站严格顺序:分诊 → 分析 → 实现 → 评审;评审 request_changes 打回实现,最多 2 轮", "站点是全新子会话,不继承根的任何上下文,编排器消息必须自包含", "analyst 的验收标准即 reviewer 的裁决契约;researcher 可选插入(research 站)", "交付物是草稿 PR;标记 ready 与合并永远留给人"] },
+    { "dot": "rose", "title": "安全", "items": ["路由鉴权生产 fail closed:eve start 下无 Basic 凭据一律 401(health 除外)", "令牌绝不进入模型可见路径:App JWT 铸 1h 安装令牌,arm/disarm 沙箱内用后即焚(M1 评审循环加固了部分失败原子性)", "validateBranch 拒绝 main/master 与非 factory/ 前缀;git 永远瞄准字面 REMOTE_URL,不用模型可写的 origin", "信任只在通道派发时盖章(agent/lib/trust.ts 单一权威);无人值守运行对写操作默认拒绝;github__* 工具经 approval 策略设门"] },
+    { "dot": "cyan", "title": "存储", "items": ["Blob 本地后端落盘 FACTORY_DATA_DIR,云形态仍可用 Vercel Blob(FACTORY_BLOB_BACKEND 开关)", "命名空间注册表守卫全部键:偏好按 principal、工厂大脑按 FACTORY_REPO、工件按锚定 id 模式", "交接工件(artifacts/ 前缀)由站点自存自取:analyst 保存、实现与评审站直读,编排器只转交 id"] },
+    { "dot": "slate", "title": "形态与边界", "items": ["GitHub 侧当前仅出站调用(工具 API + 站点 git);入站 webhook 与公网隧道属 M3", "智谱直连替代 AI Gateway(单供应商取舍:实现与评审同厂商,独立性靠会话隔离)", "云端工厂 A/B 冻结在 main 分支部署;本图为 feat/self-hosting 自托管主线", "凭据边界内的两件套:铸造器(签名换令牌)与 Git 安全层(校验与注入)"] }
+  ]
+}
