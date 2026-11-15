@@ -1,0 +1,81 @@
+{
+  "status": "complete",
+  "llm": {
+    "model": "glm-5.3"
+  },
+  "message": "Review complete: 0 finding(s) across 1 selected item(s).",
+  "summary": {
+    "files_reviewed": 1,
+    "comments": 0,
+    "total_tokens": 26873,
+    "input_tokens": 24116,
+    "output_tokens": 2757,
+    "cache_read_tokens": 17856,
+    "elapsed": "45s"
+  },
+  "tool_calls": {
+    "total": 4,
+    "by_tool": {
+      "code_search": 2,
+      "file_read": 2
+    },
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [],
+  "groups": [
+    {
+      "label": "agent/channels/dashboard.ts",
+      "files": [
+        "agent/channels/dashboard.ts"
+      ]
+    }
+  ],
+  "session_id": "b83f2295-c3c8-457b-94d7-c75988f1f77e",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "b83f2295-c3c8-457b-94d7-c75988f1f77e",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "eec21556473e2f3b36dfc7a5da93b713cc2717fe29ff2ad405efec95ef03b192"
+    },
+    "input": {
+      "mode": "range",
+      "requested_from": "75367d8",
+      "requested_head": "feat/m6-panel-ux",
+      "resolved_base": "75367d87bc8853e92e0b4c170de5c1a96ec90ad2",
+      "resolved_head": "854b137160371e2aca0e1bc5d461ad1b565d0173",
+      "exact_range": "75367d87bc8853e92e0b4c170de5c1a96ec90ad2..854b137160371e2aca0e1bc5d461ad1b565d0173",
+      "source_artifact_sha256": "b9bff9c5d77d5acd75e96a7800b0eb623a96e285f8bfedad100569ae1867529e"
+    },
+    "execution": {
+      "ocr_version": "v1.13.3",
+      "model": "glm-5.3",
+      "configured_concurrency": 8,
+      "rule_config_sha256": "aec8b9c66d91058e45e329dd68d74d645753d14731850de0fb7c7c854f533602",
+      "runtime_config_sha256": "d82c4b9be9df12c9a549d237bc74133f0fb6c4198a31e53dc5bd1ac7eb20251f"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "b1ca151b709b3e2830abbca85a48f202012f0b2bf87fb8212e87e3efacb03727",
+          "path": "agent/channels/dashboard.ts",
+          "fingerprint": "36fd238a04c972fe90a9ae6c2a14038ab64c6462ff9aa8094854b4299e805f44"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "b1ca151b709b3e2830abbca85a48f202012f0b2bf87fb8212e87e3efacb03727",
+          "path": "agent/channels/dashboard.ts",
+          "fingerprint": "36fd238a04c972fe90a9ae6c2a14038ab64c6462ff9aa8094854b4299e805f44"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": []
+    },
+    "elapsed_ms": 44996
+  }
+}
