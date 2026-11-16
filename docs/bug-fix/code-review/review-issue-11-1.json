@@ -1,0 +1,103 @@
+{
+  "status": "complete",
+  "llm": {
+    "model": "glm-5.3"
+  },
+  "message": "Review complete: 0 finding(s) across 1 selected item(s).",
+  "summary": {
+    "files_reviewed": 1,
+    "comments": 0,
+    "total_tokens": 157368,
+    "input_tokens": 139745,
+    "output_tokens": 17623,
+    "cache_read_tokens": 103168,
+    "elapsed": "5m29s"
+  },
+  "tool_calls": {
+    "total": 16,
+    "by_tool": {
+      "code_search": 8,
+      "file_find": 3,
+      "file_read": 5
+    },
+    "failure": 1,
+    "failure_by_tool": {
+      "file_read": 1
+    },
+    "failure_details": [
+      {
+        "tool_call_number": 11,
+        "tool_name": "file_read",
+        "file_path": "agent/lib/models.ts",
+        "arguments": "{\"file_path\":\"agent/package.json\",\"side\":\"new\"}",
+        "error": "file \"agent/package.json\" not found: git show ad79ac06a8ae84938326c91dfe3cc0f786399d21:agent/package.json: exit status 128: fatal: 路径 'agent/package.json' 不在 'ad79ac06a8ae84938326c91dfe3cc0f786399d21' 中\n"
+      }
+    ]
+  },
+  "comments": [],
+  "groups": [
+    {
+      "label": "agent/lib/models.ts",
+      "files": ["agent/lib/models.ts"]
+    }
+  ],
+  "session_id": "7ac4fd0f-40cc-4af9-bbc5-9ab17daade03",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "7ac4fd0f-40cc-4af9-bbc5-9ab17daade03",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {
+      "identity_sha256": "a82aa01c5f1f63fd659f972dc306afe00ac314298406c1c2142f55677361688b"
+    },
+    "input": {
+      "mode": "range",
+      "requested_from": "main",
+      "requested_head": "fix/11-max-output-tokens",
+      "resolved_base": "6019579da09db954a25099ce64f430b830aed7b8",
+      "resolved_head": "ad79ac06a8ae84938326c91dfe3cc0f786399d21",
+      "exact_range": "6019579da09db954a25099ce64f430b830aed7b8..ad79ac06a8ae84938326c91dfe3cc0f786399d21",
+      "source_artifact_sha256": "fd208851203eec3f4618530e7955c5cb40dfe3a69e8fcec8c8874a6b55280103"
+    },
+    "execution": {
+      "ocr_version": "v1.13.10",
+      "model": "glm-5.3",
+      "configured_concurrency": 8,
+      "max_tool_request_times": 100,
+      "rule_config_sha256": "8d2f5b7546bb267cfe69043c779b086c9d97be6115201297eab993604b7794f0",
+      "runtime_config_sha256": "d82c4b9be9df12c9a549d237bc74133f0fb6c4198a31e53dc5bd1ac7eb20251f"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "b083ae27432ae3f0d18dfa05e8226c8edfe4e9b75048bd99b12f4f81e7107cc0",
+          "path": "agent/lib/models.ts",
+          "fingerprint": "e221d947d15c381a9f0943d6c369212a203f298c9c88c2c6e0b1a749d24759ae"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "b083ae27432ae3f0d18dfa05e8226c8edfe4e9b75048bd99b12f4f81e7107cc0",
+          "path": "agent/lib/models.ts",
+          "fingerprint": "e221d947d15c381a9f0943d6c369212a203f298c9c88c2c6e0b1a749d24759ae"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": [],
+      "excluded": [
+        {
+          "item_id": "6b541ab9ac38a50f5a8435d1833ae89000da6393a09a1e54c3f584f70496c0f5",
+          "path": "docs/implement-plan/模型网关调试日志.md",
+          "exclude_reason": "user_exclude"
+        },
+        {
+          "item_id": "f2440413794396d42215527a66f5922695ef4980ac2315c3f47a67c99c550d0b",
+          "path": "docs/运维手册.md",
+          "exclude_reason": "user_exclude"
+        }
+      ]
+    },
+    "elapsed_ms": 328901
+  }
+}
