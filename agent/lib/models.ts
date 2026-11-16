@@ -211,13 +211,53 @@ const zhipu = createAnthropic({
   fetch: modelFetch,
 });
 
+/**
+ * Per-call output ceiling for models outside the AI SDK catalog (issue #11).
+ *
+ * @remarks
+ * The provider caps an unknown model's `max_tokens` at 4096 when the caller
+ * sets none, and thinking blocks share that budget with the tool-call JSON:
+ * once an analyst-sized tool call crosses it, the stream is cut mid-JSON but
+ * still ends with a normal message_stop, which surfaces as a content-free
+ * client-side error (`details: {}` at the harness's parking log) and kills
+ * the turn — the #37 analyst failure chain, pinned by the minimal
+ * reproduction in `docs/implement-plan/模型网关调试日志.md`. GLM-5.3 supports
+ * up to 128K output tokens; 16384 leaves generous headroom. eve 0.67.2 has
+ * no per-call maxOutputTokens surface for a static model instance, so the
+ * wrapper injects a default at the instance boundary, only when the caller
+ * did not set one.
+ */
+const MAX_OUTPUT_TOKENS_PER_CALL = 16_384;
+
+type ZhipuModel = ReturnType<typeof zhipu>;
+type ZhipuCallOptions = Parameters<ZhipuModel["doStream"]>[0];
+
+const withOutputCap = (model: ZhipuModel): ZhipuModel =>
+  new Proxy(model, {
+    get(target, property) {
+      if (property === "doGenerate" || property === "doStream") {
+        const invoke = target[property].bind(target);
+        return (options: ZhipuCallOptions) =>
+          invoke({
+            ...options,
+            maxOutputTokens:
+              options.maxOutputTokens ?? MAX_OUTPUT_TOKENS_PER_CALL,
+          });
+      }
+      const value = Reflect.get(target, property, target);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+
+const factory = (modelId: string): ZhipuModel => withOutputCap(zhipu(modelId));
+
 export const MODELS = {
-  analyst: zhipu("glm-5.3"),
-  classifier: zhipu("glm-5.3-flash"), // fast triage on the flash tier
-  implementer: zhipu("glm-5.3"), // the station that writes the code gets the strongest coding model
-  orchestrator: zhipu("glm-5.3"),
-  researcher: zhipu("glm-5.3-flash"),
-  reviewer: zhipu("glm-5.3"), // same vendor as implementer: the single-provider tradeoff of this fork
+  analyst: factory("glm-5.3"),
+  classifier: factory("glm-5.3-flash"), // fast triage on the flash tier
+  implementer: factory("glm-5.3"), // the station that writes the code gets the strongest coding model
+  orchestrator: factory("glm-5.3"),
+  researcher: factory("glm-5.3-flash"),
+  reviewer: factory("glm-5.3"), // same vendor as implementer: the single-provider tradeoff of this fork
 } as const;
 
 export type FactoryAgent = keyof typeof MODELS;
